@@ -15,16 +15,22 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Locale;
 
 @RestController
 @RequestMapping({"/candidates", "/api/candidates"})
@@ -37,6 +43,37 @@ public class CandidateController {
     public CandidateController(CandidateUseCase candidateUseCase, CandidateWebMapper candidateWebMapper) {
         this.candidateUseCase = candidateUseCase;
         this.candidateWebMapper = candidateWebMapper;
+    }
+
+    @GetMapping
+    @Operation(
+            summary = "Listar postulantes",
+            description = "Devuelve una lista paginada de postulantes. Requiere JWT con permiso RECRUITER_READ.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Listado paginado de postulantes."
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Token ausente o invalido."
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "El usuario autenticado no tiene permiso para consultar postulantes."
+                    )
+            }
+    )
+    public ResponseEntity<Page<CandidateResponse>> list(
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String estado,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
+    ) {
+        Boolean activeFilter = active != null ? active : parseEstado(estado);
+        Page<CandidateResponse> candidates = candidateUseCase.list(activeFilter, pageable)
+                .map(candidateWebMapper::toResponse);
+
+        return ResponseEntity.ok(candidates);
     }
 
     @PostMapping
@@ -114,4 +151,15 @@ public class CandidateController {
     }
 
 
+    private Boolean parseEstado(String estado) {
+        if (estado == null || estado.isBlank()) {
+            return null;
+        }
+
+        return switch (estado.trim().toLowerCase(Locale.ROOT)) {
+            case "true", "activo", "active" -> true;
+            case "false", "inactivo", "inactive" -> false;
+            default -> throw new IllegalArgumentException("Invalid estado filter: " + estado);
+        };
+    }
 }
