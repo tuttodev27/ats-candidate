@@ -1,3 +1,27 @@
+server:
+  port: 8084
 spring:
   application:
     name: ats-candidate
+  datasource:
+    url: jdbc:postgresql://localhost:5434/ats_candidate
+    username: ats-candidate
+    password: postgres-candidate
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init:
+      mode: always
+
+security:
+  jwt:
+    secret: local-development-secret-key-change-me-ats-candidate
