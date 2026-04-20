@@ -4,6 +4,8 @@ import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.port.out.repository.CandidateRepositoryPort;
 import com.ats.candidate.infrastructure.out.mapper.CandidatePersistenceMapper;
 import com.ats.candidate.infrastructure.out.repository.CandidateJpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -33,6 +35,16 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
         return candidatePersistenceMapper.toDomain(
                 candidateJpaRepository.save(candidatePersistenceMapper.toEntity(candidate))
         );
+    }
+
+    @Override
+    public Page<Candidate> findAll(Boolean active, Pageable pageable) {
+        if (active == null) {
+            return candidateJpaRepository.findAll(pageable)
+                    .map(candidatePersistenceMapper::toDomain);
+        }
+        return candidateJpaRepository.findByActive(active, pageable)
+                .map(candidatePersistenceMapper::toDomain);
     }
 
 }

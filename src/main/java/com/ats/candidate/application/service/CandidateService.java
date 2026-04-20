@@ -5,6 +5,8 @@ import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.domain.port.out.repository.CandidateRepositoryPort;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,6 +31,11 @@ public class CandidateService implements CandidateUseCase {
         candidate.setCreatedAt(LocalDateTime.now());
 
         return candidateRepositoryPort.save(candidate);
+    }
+
+    @Override
+    public Page<Candidate> list(Boolean active, Pageable pageable) {
+        return candidateRepositoryPort.findAll(active, pageable);
     }
 
 }
