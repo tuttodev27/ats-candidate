@@ -14,4 +14,7 @@ import lombok.experimental.FieldDefaults;
 public class Language {
     @EqualsAndHashCode.Include
     Long id;
+    String name;
+    String isoCode;
+    Boolean active;
 }

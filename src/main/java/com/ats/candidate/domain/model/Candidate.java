@@ -12,7 +12,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -31,21 +30,23 @@ public class Candidate {
     String lastName;
     String email;
     String phone;
+    String identityDocument;
     String countryCode;
     String code;
     LocalDate birthDate;
     String location;
     String linkedinUrl;
     String githubUrl;
-    String latestPosition;
-    Integer yearsExperience;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     Boolean active;
     Long createdBy;
     Long updatedBy;
 
+    CandidateProfessionalProfile professionalProfile;
     Set<CandidateExperience> experiences;
+    Set<CandidateEducation> educations;
+    Set<CandidateCertification> certifications;
     Set<CandidateNote> notes;
     Set<CandidateLanguage> languages;
     Set<CandidateSoftSkill> softSkills;
@@ -53,5 +54,6 @@ public class Candidate {
     Set<Attachment> attachments;
     Set<CandidateState> states;
     Set<CandidateAvailability> availabilities;
+    Set<CandidateParseResult> parseResults;
     Set<AuditEvent> auditEvents;
 }

@@ -3,7 +3,7 @@ package com.ats.candidate.domain.model;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
@@ -14,14 +14,15 @@ import java.time.LocalDateTime;
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CandidateHardSkill {
+public class CandidateEducation {
     @EqualsAndHashCode.Include
     Long id;
     Long candidateId;
-    Long hardSkillId;
-    String level;
-    Integer yearsExperience;
-    String source;
-    BigDecimal confidence;
+    Long educationLevelId;
+    String degree;
+    String institution;
+    LocalDate startDate;
+    LocalDate endDate;
     LocalDateTime createdAt;
+    LocalDateTime updatedAt;
 }

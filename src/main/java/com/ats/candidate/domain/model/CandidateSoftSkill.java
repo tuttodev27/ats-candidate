@@ -3,6 +3,9 @@ package com.ats.candidate.domain.model;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -14,5 +17,9 @@ import lombok.experimental.FieldDefaults;
 public class CandidateSoftSkill {
     @EqualsAndHashCode.Include
     Long id;
-    SoftSkill softSkill;
+    Long candidateId;
+    Long softSkillId;
+    String source;
+    BigDecimal confidence;
+    LocalDateTime createdAt;
 }

@@ -3,6 +3,8 @@ package com.ats.candidate.domain.model;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -18,4 +20,7 @@ public class SoftSkill {
     String name;
 
     String description;
+    Boolean active;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
 }
