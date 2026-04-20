@@ -33,7 +33,7 @@ import java.net.URI;
 import java.util.Locale;
 
 @RestController
-@RequestMapping({"/candidates", "/api/candidates"})
+@RequestMapping("/api/candidates")
 @Tag(name = "Candidates", description = "Operaciones para gestionar postulantes.")
 public class CandidateController {
 
@@ -109,7 +109,7 @@ public class CandidateController {
                                               "status": 400,
                                               "code": "VALIDATION_ERROR",
                                               "message": "email: must be a well-formed email address",
-                                              "path": "/candidates"
+                                              "path": "/api/candidates"
                                             }
                                             """)
                             )
@@ -126,7 +126,7 @@ public class CandidateController {
                                               "status": 409,
                                               "code": "EMAIL_ALREADY_EXISTS",
                                               "message": "Candidate already exists with email: juan.perez@example.com",
-                                              "path": "/candidates"
+                                              "path": "/api/candidates"
                                             }
                                             """)
                             )
@@ -140,7 +140,7 @@ public class CandidateController {
     ) {
         Candidate created = candidateUseCase.create(candidateWebMapper.toDomain(request), recruiterId);
         URI location = uriComponentsBuilder
-                .path("/candidates/{id}")
+                .path("/api/candidates/{id}")
                 .buildAndExpand(created.getId())
                 .toUri();
 
