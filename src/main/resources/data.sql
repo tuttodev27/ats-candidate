@@ -11,6 +11,43 @@ ON CONFLICT (id) DO UPDATE SET
     order_number = EXCLUDED.order_number,
     active = EXCLUDED.active;
 
+INSERT INTO country_code (id, country_name, iso_code, phone_code, order_number, active)
+VALUES
+    (1, 'Chile', 'CL', '+56', 1, true),
+    (2, 'Argentina', 'AR', '+54', 2, true),
+    (3, 'Peru', 'PE', '+51', 3, true),
+    (4, 'Colombia', 'CO', '+57', 4, true),
+    (5, 'Mexico', 'MX', '+52', 5, true),
+    (6, 'Estados Unidos', 'US', '+1', 6, true),
+    (7, 'Brasil', 'BR', '+55', 7, true),
+    (8, 'Uruguay', 'UY', '+598', 8, true),
+    (9, 'Paraguay', 'PY', '+595', 9, true),
+    (10, 'Bolivia', 'BO', '+591', 10, true),
+    (11, 'Ecuador', 'EC', '+593', 11, true),
+    (12, 'Venezuela', 'VE', '+58', 12, true),
+    (13, 'Espana', 'ES', '+34', 13, true)
+ON CONFLICT (id) DO UPDATE SET
+    country_name = EXCLUDED.country_name,
+    iso_code = EXCLUDED.iso_code,
+    phone_code = EXCLUDED.phone_code,
+    order_number = EXCLUDED.order_number,
+    active = EXCLUDED.active;
+
+INSERT INTO experience_range (id, label, min_years, max_years, order_number, active)
+VALUES
+    (1, 'Sin experiencia', 0, 0, 1, true),
+    (2, '0-1 anos', 0, 1, 2, true),
+    (3, '1-2 anos', 1, 2, 3, true),
+    (4, '3-5 anos', 3, 5, 4, true),
+    (5, '6-10 anos', 6, 10, 5, true),
+    (6, '10+ anos', 10, null, 6, true)
+ON CONFLICT (id) DO UPDATE SET
+    label = EXCLUDED.label,
+    min_years = EXCLUDED.min_years,
+    max_years = EXCLUDED.max_years,
+    order_number = EXCLUDED.order_number,
+    active = EXCLUDED.active;
+
 INSERT INTO language_level (id, code, name, order_number, active)
 VALUES
     (1, 'A1', 'Basico inicial', 1, true),
