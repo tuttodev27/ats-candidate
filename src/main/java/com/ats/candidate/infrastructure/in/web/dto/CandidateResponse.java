@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Schema(description = "Postulante creado.")
 public record CandidateResponse(
@@ -50,6 +51,13 @@ public record CandidateResponse(
         Long createdBy,
 
         @Schema(description = "Fecha y hora de creacion.", example = "2026-04-20T12:23:57.829836973")
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+
+        CandidateProfessionalProfileResponse professionalProfile,
+        Set<CandidateEducationResponse> educations,
+        Set<CandidateLanguageResponse> languages,
+        Set<CandidateHardSkillResponse> hardSkills,
+        Set<CandidateSoftSkillResponse> softSkills,
+        Set<AttachmentResponse> attachments
 ) {
 }

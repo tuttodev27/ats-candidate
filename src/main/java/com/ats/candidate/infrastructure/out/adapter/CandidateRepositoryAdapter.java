@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
 
@@ -31,6 +33,11 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return id != null && candidateJpaRepository.existsById(id);
+    }
+
+    @Override
     public Candidate save(Candidate candidate) {
         return candidatePersistenceMapper.toDomain(
                 candidateJpaRepository.save(candidatePersistenceMapper.toEntity(candidate))
@@ -44,6 +51,12 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
                     .map(candidatePersistenceMapper::toDomain);
         }
         return candidateJpaRepository.findByActive(active, pageable)
+                .map(candidatePersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Candidate> findById(Long id) {
+        return candidateJpaRepository.findById(id)
                 .map(candidatePersistenceMapper::toDomain);
     }
 

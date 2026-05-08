@@ -20,6 +20,7 @@ public class CandidateProfessionalProfile {
     String headline;
     String summary;
     String latestPosition;
+    Long experienceRangeId;
     Integer yearsExperience;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

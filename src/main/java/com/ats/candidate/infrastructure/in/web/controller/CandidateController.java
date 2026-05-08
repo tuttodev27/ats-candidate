@@ -1,6 +1,7 @@
 package com.ats.candidate.infrastructure.in.web.controller;
 
 import com.ats.candidate.domain.model.Candidate;
+import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.CandidateResponse;
 import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
@@ -20,7 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -74,6 +78,42 @@ public class CandidateController {
                 .map(candidateWebMapper::toResponse);
 
         return ResponseEntity.ok(candidates);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(
+            summary = "Consultar postulante por id",
+            description = "Devuelve la ficha de un postulante. Requiere JWT con permiso RECRUITER_READ.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Postulante encontrado.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = CandidateResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Postulante no encontrado.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Token ausente o invalido."
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "El usuario autenticado no tiene permiso para consultar postulantes."
+                    )
+            }
+    )
+    public ResponseEntity<CandidateResponse> getById(@PathVariable Long id) {
+        Candidate candidate = candidateUseCase.getById(id);
+        return ResponseEntity.ok(candidateWebMapper.toResponse(candidate));
     }
 
     @PostMapping
@@ -134,10 +174,11 @@ public class CandidateController {
             }
     )
     public ResponseEntity<CandidateResponse> create(
-            @RequestHeader(value = "X-Recruiter-Id", required = false) Long recruiterId,
+            @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CreateCandidateRequest request,
             UriComponentsBuilder uriComponentsBuilder
     ) {
+        Long recruiterId = extractRecruiterId(jwt);
         Candidate created = candidateUseCase.create(candidateWebMapper.toDomain(request), recruiterId);
         URI location = uriComponentsBuilder
                 .path("/api/candidates/{id}")
@@ -148,6 +189,34 @@ public class CandidateController {
                 .status(HttpStatus.CREATED)
                 .location(location)
                 .body(candidateWebMapper.toResponse(created));
+    }
+
+    private Long extractRecruiterId(Jwt jwt) {
+        if (jwt == null) {
+            throw new InvalidRecruiterException("Authenticated recruiter is required");
+        }
+        Object value = firstPresentClaim(jwt, "recruiterId", "recruiter_id", "userId", "user_id");
+        if (value == null) {
+            value = jwt.getSubject();
+        }
+        if (value == null || String.valueOf(value).isBlank()) {
+            throw new InvalidRecruiterException("Authenticated recruiter id is required");
+        }
+        try {
+            return Long.valueOf(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            throw new InvalidRecruiterException("Authenticated recruiter id must be numeric");
+        }
+    }
+
+    private Object firstPresentClaim(Jwt jwt, String... claimNames) {
+        for (String claimName : claimNames) {
+            Object value = jwt.getClaim(claimName);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
 
