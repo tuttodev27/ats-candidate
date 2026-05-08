@@ -14,4 +14,8 @@ import lombok.experimental.FieldDefaults;
 public class CandidateState {
     @EqualsAndHashCode.Include
     Long id;
+    Long candidateId;
+    String state;
+    java.time.LocalDateTime createdAt;
+    Long createdBy;
 }
