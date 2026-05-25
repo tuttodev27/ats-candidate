@@ -20,6 +20,8 @@ import com.ats.candidate.domain.port.out.repository.CandidateProfessionalProfile
 import com.ats.candidate.domain.port.out.repository.CandidateRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateSoftSkillRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateStateRepositoryPort;
+import com.ats.candidate.domain.port.out.repository.CandidateExperienceRepositoryPort;
+import com.ats.candidate.domain.port.out.repository.CandidateNoteRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,6 +75,12 @@ class CandidateServiceTest {
     @Mock
     private AttachmentRepositoryPort attachmentRepositoryPort;
 
+    @Mock
+    private CandidateExperienceRepositoryPort candidateExperienceRepositoryPort;
+
+    @Mock
+    private CandidateNoteRepositoryPort candidateNoteRepositoryPort;
+
     @InjectMocks
     private CandidateService candidateService;
 
@@ -86,6 +94,8 @@ class CandidateServiceTest {
         lenient().when(catalogValidationPort.existsActiveHardSkill(1L)).thenReturn(true);
         lenient().when(catalogValidationPort.existsActiveSoftSkill(2L)).thenReturn(true);
         lenient().when(candidateStateRepositoryPort.findLatestByCandidateId(any())).thenReturn(Optional.empty());
+        lenient().when(candidateExperienceRepositoryPort.findByCandidateId(any())).thenReturn(List.of());
+        lenient().when(candidateNoteRepositoryPort.findByCandidateId(any())).thenReturn(List.of());
     }
 
 
@@ -312,6 +322,78 @@ class CandidateServiceTest {
         verify(candidateRepositoryPort, never()).save(any());
     }
 
+    @Test
+    void updateModifiesDetailsAndReplacesCollections() {
+        Long candidateId = 1L;
+        Candidate existingCandidate = candidateWithDetails();
+        existingCandidate.setId(candidateId);
+
+        Candidate updateData = candidateWithDetails();
+        updateData.setPhone("+56999999999");
+        updateData.setExperiences(Set.of(com.ats.candidate.domain.model.CandidateExperience.builder()
+                .companyName("Test Company")
+                .startDate(java.time.LocalDate.of(2020, 1, 1))
+                .endDate(java.time.LocalDate.of(2022, 1, 1))
+                .build()));
+        updateData.setNotes(Set.of(com.ats.candidate.domain.model.CandidateNote.builder()
+                .note("Test observation")
+                .build()));
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(candidateRepositoryPort.update(any(Candidate.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Candidate result = candidateService.update(candidateId, updateData, 42L);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getPhone()).isEqualTo("+56999999999");
+
+        verify(candidateRepositoryPort).update(any(Candidate.class));
+        verify(educationRepositoryPort).deleteAllByCandidateId(candidateId);
+        verify(languageRepositoryPort).deleteAllByCandidateId(candidateId);
+        verify(hardSkillRepositoryPort).deleteAllByCandidateId(candidateId);
+        verify(softSkillRepositoryPort).deleteAllByCandidateId(candidateId);
+        verify(candidateExperienceRepositoryPort).deleteAllByCandidateId(candidateId);
+        verify(candidateNoteRepositoryPort).deleteAllByCandidateId(candidateId);
+
+        verify(educationRepositoryPort).saveAll(any());
+        verify(languageRepositoryPort).saveAll(any());
+        verify(hardSkillRepositoryPort).saveAll(any());
+        verify(softSkillRepositoryPort).saveAll(any());
+        verify(candidateExperienceRepositoryPort).saveAll(any());
+        verify(candidateNoteRepositoryPort).saveAll(any());
+    }
+
+    @Test
+    void updateRejectsExperienceWithInvalidDates() {
+        Long candidateId = 1L;
+        Candidate updateData = candidateWithDetails();
+        updateData.setExperiences(Set.of(com.ats.candidate.domain.model.CandidateExperience.builder()
+                .companyName("Test Company")
+                .startDate(java.time.LocalDate.of(2022, 1, 1))
+                .endDate(java.time.LocalDate.of(2020, 1, 1))
+                .build()));
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+
+        assertThatThrownBy(() -> candidateService.update(candidateId, updateData, 42L))
+                .isInstanceOf(InvalidCatalogReferenceException.class)
+                .hasMessageContaining("Experience start date must be before or equal to end date");
+
+        verify(candidateRepositoryPort, never()).update(any());
+    }
+
+    @Test
+    void updateThrowsExceptionWhenCandidateNotFound() {
+        Long candidateId = 1L;
+        Candidate updateData = candidateWithDetails();
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.update(candidateId, updateData, 42L))
+                .isInstanceOf(CandidateNotFoundException.class);
+
+        verify(candidateRepositoryPort, never()).update(any());
+    }
 
     private Candidate candidateWithDetails() {
         return Candidate.builder()

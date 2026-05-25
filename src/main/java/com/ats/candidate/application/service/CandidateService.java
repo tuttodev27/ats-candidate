@@ -5,8 +5,10 @@ import com.ats.candidate.domain.exception.EmailAlreadyExistException;
 import com.ats.candidate.domain.exception.InvalidCatalogReferenceException;
 import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.model.CandidateEducation;
+import com.ats.candidate.domain.model.CandidateExperience;
 import com.ats.candidate.domain.model.CandidateHardSkill;
 import com.ats.candidate.domain.model.CandidateLanguage;
+import com.ats.candidate.domain.model.CandidateNote;
 import com.ats.candidate.domain.model.CandidateProfessionalProfile;
 import com.ats.candidate.domain.model.CandidateSoftSkill;
 import com.ats.candidate.domain.model.CandidateState;
@@ -14,12 +16,15 @@ import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.domain.port.out.repository.AttachmentRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateCatalogValidationPort;
 import com.ats.candidate.domain.port.out.repository.CandidateEducationRepositoryPort;
+import com.ats.candidate.domain.port.out.repository.CandidateExperienceRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateHardSkillRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateLanguageRepositoryPort;
+import com.ats.candidate.domain.port.out.repository.CandidateNoteRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateProfessionalProfileRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateSoftSkillRepositoryPort;
 import com.ats.candidate.domain.port.out.repository.CandidateStateRepositoryPort;
+
 
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -45,6 +50,8 @@ public class CandidateService implements CandidateUseCase {
     private final CandidateSoftSkillRepositoryPort softSkillRepositoryPort;
     private final CandidateStateRepositoryPort candidateStateRepositoryPort;
     private final AttachmentRepositoryPort attachmentRepositoryPort;
+    private final CandidateExperienceRepositoryPort candidateExperienceRepositoryPort;
+    private final CandidateNoteRepositoryPort candidateNoteRepositoryPort;
 
     public CandidateService(
             CandidateRepositoryPort candidateRepositoryPort,
@@ -55,7 +62,9 @@ public class CandidateService implements CandidateUseCase {
             CandidateHardSkillRepositoryPort hardSkillRepositoryPort,
             CandidateSoftSkillRepositoryPort softSkillRepositoryPort,
             CandidateStateRepositoryPort candidateStateRepositoryPort,
-            AttachmentRepositoryPort attachmentRepositoryPort
+            AttachmentRepositoryPort attachmentRepositoryPort,
+            CandidateExperienceRepositoryPort candidateExperienceRepositoryPort,
+            CandidateNoteRepositoryPort candidateNoteRepositoryPort
     ) {
         this.candidateRepositoryPort = candidateRepositoryPort;
         this.catalogValidationPort = catalogValidationPort;
@@ -66,7 +75,10 @@ public class CandidateService implements CandidateUseCase {
         this.softSkillRepositoryPort = softSkillRepositoryPort;
         this.candidateStateRepositoryPort = candidateStateRepositoryPort;
         this.attachmentRepositoryPort = attachmentRepositoryPort;
+        this.candidateExperienceRepositoryPort = candidateExperienceRepositoryPort;
+        this.candidateNoteRepositoryPort = candidateNoteRepositoryPort;
     }
+
 
     @Override
     @Transactional
@@ -79,13 +91,44 @@ public class CandidateService implements CandidateUseCase {
         candidate.setActive(true);
         candidate.setCreatedBy(recruiterId);
         candidate.setCreatedAt(now);
-        prepareDetails(candidate, now);
+        prepareDetails(candidate, recruiterId, now);
 
         Candidate saved = candidateRepositoryPort.save(candidate);
         saveDetails(candidate, saved.getId());
         saveInitialState(saved.getId(), recruiterId, now);
         return loadDetails(saved);
     }
+
+    @Override
+    @Transactional
+    public Candidate update(Long id, Candidate candidate, Long recruiterId) {
+        if (!candidateRepositoryPort.existsById(id)) {
+            throw new CandidateNotFoundException(id);
+        }
+
+        validateCatalogReferences(candidate);
+
+        LocalDateTime now = LocalDateTime.now();
+        candidate.setId(id);
+        candidate.setUpdatedAt(now);
+        candidate.setUpdatedBy(recruiterId);
+
+        prepareDetails(candidate, recruiterId, now);
+
+        Candidate updated = candidateRepositoryPort.update(candidate);
+
+        educationRepositoryPort.deleteAllByCandidateId(id);
+        languageRepositoryPort.deleteAllByCandidateId(id);
+        hardSkillRepositoryPort.deleteAllByCandidateId(id);
+        softSkillRepositoryPort.deleteAllByCandidateId(id);
+        candidateExperienceRepositoryPort.deleteAllByCandidateId(id);
+        candidateNoteRepositoryPort.deleteAllByCandidateId(id);
+
+        saveDetails(candidate, id);
+
+        return loadDetails(updated);
+    }
+
 
     @Override
     public Page<Candidate> list(Boolean active, Pageable pageable) {
@@ -121,7 +164,16 @@ public class CandidateService implements CandidateUseCase {
             candidate.getSoftSkills().forEach(softSkill -> softSkill.setCandidateId(candidateId));
             softSkillRepositoryPort.saveAll(candidate.getSoftSkills());
         }
+        if (candidate.getExperiences() != null && !candidate.getExperiences().isEmpty()) {
+            candidate.getExperiences().forEach(experience -> experience.setCandidateId(candidateId));
+            candidateExperienceRepositoryPort.saveAll(candidate.getExperiences());
+        }
+        if (candidate.getNotes() != null && !candidate.getNotes().isEmpty()) {
+            candidate.getNotes().forEach(note -> note.setCandidateId(candidateId.intValue()));
+            candidateNoteRepositoryPort.saveAll(candidate.getNotes());
+        }
     }
+
 
     private void saveInitialState(Long candidateId, Long recruiterId, LocalDateTime now) {
         candidateStateRepositoryPort.save(CandidateState.builder()
@@ -139,7 +191,21 @@ public class CandidateService implements CandidateUseCase {
         validateLanguages(candidate);
         validateHardSkills(candidate);
         validateSoftSkills(candidate);
+        validateExperiences(candidate);
     }
+
+    private void validateExperiences(Candidate candidate) {
+        if (candidate.getExperiences() == null) {
+            return;
+        }
+        for (CandidateExperience experience : candidate.getExperiences()) {
+            if (experience.getStartDate() != null && experience.getEndDate() != null
+                    && experience.getStartDate().isAfter(experience.getEndDate())) {
+                throw new InvalidCatalogReferenceException("Experience start date must be before or equal to end date");
+            }
+        }
+    }
+
 
     private void validateCountryCode(String countryCode) {
         if (countryCode != null && !countryCode.isBlank() && !catalogValidationPort.existsActiveCountryCode(countryCode)) {
@@ -229,13 +295,16 @@ public class CandidateService implements CandidateUseCase {
         candidate.setHardSkills(new HashSet<>(hardSkillRepositoryPort.findByCandidateId(candidateId)));
         candidate.setSoftSkills(new HashSet<>(softSkillRepositoryPort.findByCandidateId(candidateId)));
         candidate.setAttachments(new HashSet<>(attachmentRepositoryPort.findByCandidateId(candidateId)));
+        candidate.setExperiences(new HashSet<>(candidateExperienceRepositoryPort.findByCandidateId(candidateId)));
+        candidate.setNotes(new HashSet<>(candidateNoteRepositoryPort.findByCandidateId(candidateId)));
         candidateStateRepositoryPort.findLatestByCandidateId(candidateId)
                 .ifPresent(state -> candidate.setStates(Set.of(state)));
         return candidate;
     }
 
 
-    private void prepareDetails(Candidate candidate, LocalDateTime now) {
+
+    private void prepareDetails(Candidate candidate, Long recruiterId, LocalDateTime now) {
         CandidateProfessionalProfile professionalProfile = candidate.getProfessionalProfile();
         if (professionalProfile != null) {
             professionalProfile.setCreatedAt(now);
@@ -253,6 +322,12 @@ public class CandidateService implements CandidateUseCase {
         }
         if (candidate.getSoftSkills() != null) {
             candidate.getSoftSkills().forEach(softSkill -> prepareSoftSkill(softSkill, now));
+        }
+        if (candidate.getExperiences() != null) {
+            candidate.getExperiences().forEach(experience -> prepareExperience(experience, now));
+        }
+        if (candidate.getNotes() != null) {
+            candidate.getNotes().forEach(note -> prepareNote(note, recruiterId, now));
         }
     }
 
@@ -273,4 +348,14 @@ public class CandidateService implements CandidateUseCase {
         softSkill.setCreatedAt(now);
     }
 
+    private void prepareExperience(CandidateExperience experience, LocalDateTime now) {
+        experience.setCreatedAt(now);
+        experience.setUpdatedAt(now);
+    }
+
+    private void prepareNote(CandidateNote note, Long recruiterId, LocalDateTime now) {
+        note.setCreatedBy(String.valueOf(recruiterId));
+        note.setCreatedAt(now.toString());
+    }
 }
+

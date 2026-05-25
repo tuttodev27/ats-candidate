@@ -4,7 +4,9 @@ import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.port.out.repository.CandidateRepositoryPort;
 import com.ats.candidate.infrastructure.out.mapper.CandidatePersistenceMapper;
 import com.ats.candidate.infrastructure.out.repository.CandidateJpaRepository;
+import com.ats.candidate.infrastructure.out.entity.CandidateEntity;
 import org.springframework.data.domain.Page;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -60,4 +62,23 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
                 .map(candidatePersistenceMapper::toDomain);
     }
 
+    @Override
+    public Candidate update(Candidate candidate) {
+        CandidateEntity existing = candidateJpaRepository.findById(candidate.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Candidate not found with id: " + candidate.getId()));
+
+        existing.setPhone(candidate.getPhone());
+        existing.setCountryCode(candidate.getCountryCode());
+        existing.setIdentityDocument(candidate.getIdentityDocument());
+        existing.setLocation(candidate.getLocation());
+        existing.setLinkedinUrl(candidate.getLinkedinUrl());
+        existing.setGithubUrl(candidate.getGithubUrl());
+        existing.setBirthDate(candidate.getBirthDate());
+        existing.setUpdatedAt(candidate.getUpdatedAt());
+        existing.setUpdatedBy(candidate.getUpdatedBy());
+
+        return candidatePersistenceMapper.toDomain(candidateJpaRepository.save(existing));
+    }
+
 }
+

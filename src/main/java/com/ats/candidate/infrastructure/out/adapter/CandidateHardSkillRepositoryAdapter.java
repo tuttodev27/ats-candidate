@@ -41,4 +41,10 @@ public class CandidateHardSkillRepositoryAdapter implements CandidateHardSkillRe
                 .map(hardSkillPersistenceMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByCandidateId(Long candidateId) {
+        hardSkillJpaRepository.deleteAllByCandidateId(candidateId);
+    }
 }
+

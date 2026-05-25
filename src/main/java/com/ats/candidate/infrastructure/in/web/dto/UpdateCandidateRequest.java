@@ -50,6 +50,13 @@ public record UpdateCandidateRequest(
         Set<CreateCandidateHardSkillRequest> hardSkills,
 
         @Valid
-        Set<CreateCandidateSoftSkillRequest> softSkills
+        Set<CreateCandidateSoftSkillRequest> softSkills,
+
+        @Valid
+        Set<CandidateExperienceRequest> experiences,
+
+        @Valid
+        Set<CandidateNoteRequest> notes
 ) {
 }
+

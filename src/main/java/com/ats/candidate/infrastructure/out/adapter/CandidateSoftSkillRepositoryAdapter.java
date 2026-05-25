@@ -41,4 +41,10 @@ public class CandidateSoftSkillRepositoryAdapter implements CandidateSoftSkillRe
                 .map(softSkillPersistenceMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByCandidateId(Long candidateId) {
+        softSkillJpaRepository.deleteAllByCandidateId(candidateId);
+    }
 }
+

@@ -129,6 +129,8 @@ class CandidateControllerTest {
                 null,
                 null,
                 null,
+                null,
+                null,
                 null
         );
     }
