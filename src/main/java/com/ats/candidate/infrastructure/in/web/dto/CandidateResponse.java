@@ -61,6 +61,9 @@ public record CandidateResponse(
         Set<CandidateLanguageResponse> languages,
         Set<CandidateHardSkillResponse> hardSkills,
         Set<CandidateSoftSkillResponse> softSkills,
-        Set<AttachmentResponse> attachments
+        Set<AttachmentResponse> attachments,
+        Set<CandidateExperienceResponse> experiences,
+        Set<CandidateNoteResponse> notes
 ) {
 }
+

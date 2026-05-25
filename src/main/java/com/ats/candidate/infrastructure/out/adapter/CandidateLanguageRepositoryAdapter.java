@@ -41,4 +41,10 @@ public class CandidateLanguageRepositoryAdapter implements CandidateLanguageRepo
                 .map(languagePersistenceMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByCandidateId(Long candidateId) {
+        languageJpaRepository.deleteAllByCandidateId(candidateId);
+    }
 }
+

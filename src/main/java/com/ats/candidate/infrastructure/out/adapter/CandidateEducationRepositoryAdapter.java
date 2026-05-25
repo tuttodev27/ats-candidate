@@ -41,4 +41,10 @@ public class CandidateEducationRepositoryAdapter implements CandidateEducationRe
                 .map(educationPersistenceMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByCandidateId(Long candidateId) {
+        educationJpaRepository.deleteAllByCandidateId(candidateId);
+    }
 }
+

@@ -6,7 +6,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface CandidateUseCase {
     Candidate create(Candidate candidate, Long recruiterId);
+    Candidate update(Long id, Candidate candidate, Long recruiterId);
     Page<Candidate> list(Boolean active, Pageable pageable);
     Candidate getById(Long id);
-
 }
+

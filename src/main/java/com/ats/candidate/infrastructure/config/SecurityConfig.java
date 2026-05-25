@@ -41,6 +41,8 @@ public class SecurityConfig {
                         .hasAuthority("RECRUITER_READ")
                         .requestMatchers(HttpMethod.POST, "/api/candidates", "/api/candidates/*/attachments")
                         .hasAuthority("RECRUITER_WRITE")
+                        .requestMatchers(HttpMethod.PUT, "/api/candidates/*")
+                        .hasAuthority("RECRUITER_WRITE")
                         .anyRequest()
                         .permitAll()
                 )

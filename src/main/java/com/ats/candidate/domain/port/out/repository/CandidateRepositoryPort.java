@@ -10,7 +10,8 @@ public interface CandidateRepositoryPort {
     boolean existsByEmail(String email);
     boolean existsById(Long id);
     Candidate save(Candidate candidate);
+    Candidate update(Candidate candidate);
     Page<Candidate> findAll(Boolean active, Pageable pageable);
     Optional<Candidate> findById(Long id);
-
 }
+

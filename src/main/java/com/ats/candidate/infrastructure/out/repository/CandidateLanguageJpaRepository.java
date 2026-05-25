@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface CandidateLanguageJpaRepository extends JpaRepository<CandidateLanguageEntity, Long> {
     List<CandidateLanguageEntity> findByCandidateId(Long candidateId);
+    void deleteAllByCandidateId(Long candidateId);
 }
+

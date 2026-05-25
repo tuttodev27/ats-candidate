@@ -8,4 +8,6 @@ import java.util.Set;
 public interface CandidateEducationRepositoryPort {
     Set<CandidateEducation> saveAll(Set<CandidateEducation> educations);
     List<CandidateEducation> findByCandidateId(Long candidateId);
+    void deleteAllByCandidateId(Long candidateId);
 }
+

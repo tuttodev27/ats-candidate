@@ -5,6 +5,7 @@ import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.CandidateResponse;
 import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
+import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.exception.ErrorResponse;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,11 +27,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -119,6 +122,24 @@ public class CandidateController {
                                 .location(location)
                                 .body(candidateWebMapper.toResponse(created));
         }
+
+        @PutMapping("/{id}")
+        @Operation(summary = "Actualizar postulante", description = "Actualiza los datos de un postulante existente. Requiere JWT con permiso RECRUITER_WRITE.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Postulante actualizado correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CandidateResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "Request invalido.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
+                        @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso para actualizar postulantes."),
+                        @ApiResponse(responseCode = "404", description = "Postulante no encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        public ResponseEntity<CandidateResponse> update(
+                        @PathVariable Long id,
+                        @AuthenticationPrincipal Jwt jwt,
+                        @Valid @RequestBody UpdateCandidateRequest request) {
+                Long recruiterId = extractRecruiterId(jwt);
+                Candidate updated = candidateUseCase.update(id, candidateWebMapper.toDomain(request), recruiterId);
+                return ResponseEntity.ok(candidateWebMapper.toResponse(updated));
+        }
+
 
         private Long extractRecruiterId(Jwt jwt) {
                 if (jwt == null) {
