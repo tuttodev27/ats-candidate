@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.Set;
 import java.time.LocalDateTime;
 
 
@@ -228,8 +229,11 @@ public class CandidateService implements CandidateUseCase {
         candidate.setHardSkills(new HashSet<>(hardSkillRepositoryPort.findByCandidateId(candidateId)));
         candidate.setSoftSkills(new HashSet<>(softSkillRepositoryPort.findByCandidateId(candidateId)));
         candidate.setAttachments(new HashSet<>(attachmentRepositoryPort.findByCandidateId(candidateId)));
+        candidateStateRepositoryPort.findLatestByCandidateId(candidateId)
+                .ifPresent(state -> candidate.setStates(Set.of(state)));
         return candidate;
     }
+
 
     private void prepareDetails(Candidate candidate, LocalDateTime now) {
         CandidateProfessionalProfile professionalProfile = candidate.getProfessionalProfile();

@@ -42,7 +42,10 @@ public interface CandidateWebMapper {
     @Mapping(target = "auditEvents", ignore = true)
     Candidate toDomain(CreateCandidateRequest request);
 
+    @Mapping(target = "currentState",
+             expression = "java(candidate.getStates() != null && !candidate.getStates().isEmpty() ? candidate.getStates().iterator().next().getState() : null)")
     CandidateResponse toResponse(Candidate candidate);
+
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "candidateId", ignore = true)

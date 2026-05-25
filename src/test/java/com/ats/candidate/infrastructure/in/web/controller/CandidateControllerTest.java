@@ -123,6 +123,7 @@ class CandidateControllerTest {
                 true,
                 42L,
                 null,
+                null, // currentState
                 null,
                 null,
                 null,
@@ -132,3 +133,4 @@ class CandidateControllerTest {
         );
     }
 }
+
