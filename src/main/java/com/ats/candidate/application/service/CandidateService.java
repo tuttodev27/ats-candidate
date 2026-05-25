@@ -160,14 +160,18 @@ public class CandidateService implements CandidateUseCase {
         if (candidate.getEducations() == null) {
             return;
         }
-        candidate.getEducations().stream()
-                .map(CandidateEducation::getEducationLevelId)
-                .filter(id -> id != null && !catalogValidationPort.existsActiveEducationLevel(id))
-                .findFirst()
-                .ifPresent(id -> {
-                    throw new InvalidCatalogReferenceException("Invalid or inactive educationLevelId: " + id);
-                });
+        for (CandidateEducation education : candidate.getEducations()) {
+            Long id = education.getEducationLevelId();
+            if (id != null && !catalogValidationPort.existsActiveEducationLevel(id)) {
+                throw new InvalidCatalogReferenceException("Invalid or inactive educationLevelId: " + id);
+            }
+            if (education.getStartDate() != null && education.getEndDate() != null
+                    && education.getStartDate().isAfter(education.getEndDate())) {
+                throw new InvalidCatalogReferenceException("Education start date must be before or equal to end date");
+            }
+        }
     }
+
 
     private void validateLanguages(Candidate candidate) {
         if (candidate.getLanguages() == null) {

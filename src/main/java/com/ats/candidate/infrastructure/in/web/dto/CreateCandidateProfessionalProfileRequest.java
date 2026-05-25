@@ -1,6 +1,7 @@
 package com.ats.candidate.infrastructure.in.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Perfil profesional del postulante.")
@@ -16,6 +17,8 @@ public record CreateCandidateProfessionalProfileRequest(
 
         Long experienceRangeId,
 
+        @Min(0)
         Integer yearsExperience
 ) {
 }
+

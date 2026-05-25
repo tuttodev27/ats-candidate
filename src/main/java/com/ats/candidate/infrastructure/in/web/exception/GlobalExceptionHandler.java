@@ -118,4 +118,18 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpStatus.CONFLICT.value(),
+                        "EMAIL_ALREADY_EXISTS",
+                        "Candidate already exists with this email",
+                        request.getRequestURI()
+                )
+        );
+    }
 }
+

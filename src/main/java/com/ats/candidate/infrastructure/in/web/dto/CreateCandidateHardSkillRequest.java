@@ -1,6 +1,7 @@
 package com.ats.candidate.infrastructure.in.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -14,8 +15,10 @@ public record CreateCandidateHardSkillRequest(
         @Size(max = 80)
         String level,
 
+        @Min(0)
         Integer yearsExperience,
         String source,
         BigDecimal confidence
 ) {
 }
+

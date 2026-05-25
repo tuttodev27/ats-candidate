@@ -209,7 +209,8 @@ class CandidateServiceTest {
     void listPassesActiveFilterAndLoadsDetails() {
         PageRequest pageable = PageRequest.of(0, 20);
         Candidate candidate = Candidate.builder().id(100L).active(true).build();
-        when(candidateRepositoryPort.findAll(true, pageable)).thenReturn(new PageImpl<>(List.of(candidate), pageable, 1));
+        when(candidateRepositoryPort.findAll(true, pageable))
+                .thenReturn(new PageImpl<>(List.of(candidate), pageable, 1));
         when(professionalProfileRepositoryPort.findByCandidateId(100L)).thenReturn(Optional.empty());
         when(educationRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
         when(languageRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
@@ -249,6 +250,23 @@ class CandidateServiceTest {
 
         verify(candidateRepositoryPort, never()).save(any());
     }
+
+    @Test
+    void createRejectsEducationWithInvalidDates() {
+        Candidate candidate = candidateWithDetails();
+        CandidateEducation education = candidate.getEducations().iterator().next();
+        education.setStartDate(java.time.LocalDate.of(2026, 1, 1));
+        education.setEndDate(java.time.LocalDate.of(2025, 1, 1));
+
+        when(candidateRepositoryPort.existsByEmail(candidate.getEmail())).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.create(candidate, 9L))
+                .isInstanceOf(InvalidCatalogReferenceException.class)
+                .hasMessageContaining("start date must be before or equal to end date");
+
+        verify(candidateRepositoryPort, never()).save(any());
+    }
+
 
     private Candidate candidateWithDetails() {
         return Candidate.builder()

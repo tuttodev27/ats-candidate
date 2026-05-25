@@ -41,194 +41,121 @@ import java.util.Locale;
 @Tag(name = "Candidates", description = "Operaciones para gestionar postulantes.")
 public class CandidateController {
 
-    private final CandidateUseCase candidateUseCase;
-    private final CandidateWebMapper candidateWebMapper;
+        private final CandidateUseCase candidateUseCase;
+        private final CandidateWebMapper candidateWebMapper;
 
-    public CandidateController(CandidateUseCase candidateUseCase, CandidateWebMapper candidateWebMapper) {
-        this.candidateUseCase = candidateUseCase;
-        this.candidateWebMapper = candidateWebMapper;
-    }
-
-    @GetMapping
-    @Operation(
-            summary = "Listar postulantes",
-            description = "Devuelve una lista paginada de postulantes. Requiere JWT con permiso RECRUITER_READ.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Listado paginado de postulantes."
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "Token ausente o invalido."
-                    ),
-                    @ApiResponse(
-                            responseCode = "403",
-                            description = "El usuario autenticado no tiene permiso para consultar postulantes."
-                    )
-            }
-    )
-    public ResponseEntity<Page<CandidateResponse>> list(
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String estado,
-            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
-    ) {
-        Boolean activeFilter = active != null ? active : parseEstado(estado);
-        Page<CandidateResponse> candidates = candidateUseCase.list(activeFilter, pageable)
-                .map(candidateWebMapper::toResponse);
-
-        return ResponseEntity.ok(candidates);
-    }
-
-    @GetMapping("/{id}")
-    @Operation(
-            summary = "Consultar postulante por id",
-            description = "Devuelve la ficha de un postulante. Requiere JWT con permiso RECRUITER_READ.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Postulante encontrado.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = CandidateResponse.class)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Postulante no encontrado.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = ErrorResponse.class)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "Token ausente o invalido."
-                    ),
-                    @ApiResponse(
-                            responseCode = "403",
-                            description = "El usuario autenticado no tiene permiso para consultar postulantes."
-                    )
-            }
-    )
-    public ResponseEntity<CandidateResponse> getById(@PathVariable Long id) {
-        Candidate candidate = candidateUseCase.getById(id);
-        return ResponseEntity.ok(candidateWebMapper.toResponse(candidate));
-    }
-
-    @PostMapping
-    @Operation(
-            summary = "Crear postulante",
-            description = "Crea un postulante activo. El correo electronico debe ser unico.",
-            parameters = {
-                    @Parameter(
-                            name = "X-Recruiter-Id",
-                            description = "Identificador temporal del reclutador. Sera reemplazado por JWT mas adelante.",
-                            in = ParameterIn.HEADER,
-                            example = "1"
-                    )
-            },
-            responses = {
-                    @ApiResponse(
-                            responseCode = "201",
-                            description = "Postulante creado correctamente.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = CandidateResponse.class)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Request invalido.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = ErrorResponse.class),
-                                    examples = @ExampleObject(value = """
-                                            {
-                                              "timestamp": "2026-04-20T16:24:04.586976732Z",
-                                              "status": 400,
-                                              "code": "VALIDATION_ERROR",
-                                              "message": "email: must be a well-formed email address",
-                                              "path": "/api/candidates"
-                                            }
-                                            """)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "409",
-                            description = "Ya existe un postulante con el mismo correo electronico.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = ErrorResponse.class),
-                                    examples = @ExampleObject(value = """
-                                            {
-                                              "timestamp": "2026-04-20T16:24:04.586976732Z",
-                                              "status": 409,
-                                              "code": "EMAIL_ALREADY_EXISTS",
-                                              "message": "Candidate already exists with email: juan.perez@example.com",
-                                              "path": "/api/candidates"
-                                            }
-                                            """)
-                            )
-                    )
-            }
-    )
-    public ResponseEntity<CandidateResponse> create(
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody CreateCandidateRequest request,
-            UriComponentsBuilder uriComponentsBuilder
-    ) {
-        Long recruiterId = extractRecruiterId(jwt);
-        Candidate created = candidateUseCase.create(candidateWebMapper.toDomain(request), recruiterId);
-        URI location = uriComponentsBuilder
-                .path("/api/candidates/{id}")
-                .buildAndExpand(created.getId())
-                .toUri();
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .location(location)
-                .body(candidateWebMapper.toResponse(created));
-    }
-
-    private Long extractRecruiterId(Jwt jwt) {
-        if (jwt == null) {
-            throw new InvalidRecruiterException("Authenticated recruiter is required");
-        }
-        Object value = firstPresentClaim(jwt, "recruiterId", "recruiter_id", "userId", "user_id");
-        if (value == null) {
-            value = jwt.getSubject();
-        }
-        if (value == null || String.valueOf(value).isBlank()) {
-            throw new InvalidRecruiterException("Authenticated recruiter id is required");
-        }
-        try {
-            return Long.valueOf(String.valueOf(value));
-        } catch (NumberFormatException ex) {
-            throw new InvalidRecruiterException("Authenticated recruiter id must be numeric");
-        }
-    }
-
-    private Object firstPresentClaim(Jwt jwt, String... claimNames) {
-        for (String claimName : claimNames) {
-            Object value = jwt.getClaim(claimName);
-            if (value != null) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-
-    private Boolean parseEstado(String estado) {
-        if (estado == null || estado.isBlank()) {
-            return null;
+        public CandidateController(CandidateUseCase candidateUseCase, CandidateWebMapper candidateWebMapper) {
+                this.candidateUseCase = candidateUseCase;
+                this.candidateWebMapper = candidateWebMapper;
         }
 
-        return switch (estado.trim().toLowerCase(Locale.ROOT)) {
-            case "true", "activo", "active" -> true;
-            case "false", "inactivo", "inactive" -> false;
-            default -> throw new IllegalArgumentException("Invalid estado filter: " + estado);
-        };
-    }
+        @GetMapping
+        @Operation(summary = "Listar postulantes", description = "Devuelve una lista paginada de postulantes. Requiere JWT con permiso RECRUITER_READ.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Listado paginado de postulantes."),
+                        @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
+                        @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso para consultar postulantes.")
+        })
+        public ResponseEntity<Page<CandidateResponse>> list(
+                        @RequestParam(required = false) Boolean active,
+                        @RequestParam(required = false) String estado,
+                        @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+                Boolean activeFilter = active != null ? active : parseEstado(estado);
+                Page<CandidateResponse> candidates = candidateUseCase.list(activeFilter, pageable)
+                                .map(candidateWebMapper::toResponse);
+
+                return ResponseEntity.ok(candidates);
+        }
+
+        @GetMapping("/{id}")
+        @Operation(summary = "Consultar postulante por id", description = "Devuelve la ficha de un postulante. Requiere JWT con permiso RECRUITER_READ.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Postulante encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CandidateResponse.class))),
+                        @ApiResponse(responseCode = "404", description = "Postulante no encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
+                        @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso para consultar postulantes.")
+        })
+        public ResponseEntity<CandidateResponse> getById(@PathVariable Long id) {
+                Candidate candidate = candidateUseCase.getById(id);
+                return ResponseEntity.ok(candidateWebMapper.toResponse(candidate));
+        }
+
+        @PostMapping
+        @Operation(summary = "Crear postulante", description = "Crea un postulante activo. El correo electronico debe ser unico.", parameters = {
+                        @Parameter(name = "X-Recruiter-Id", description = "Identificador temporal del reclutador. Sera reemplazado por JWT mas adelante.", in = ParameterIn.HEADER, example = "1")
+        }, responses = {
+                        @ApiResponse(responseCode = "201", description = "Postulante creado correctamente.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CandidateResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "Request invalido.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class), examples = @ExampleObject(value = """
+                                        {
+                                          "timestamp": "2026-04-20T16:24:04.586976732Z",
+                                          "status": 400,
+                                          "code": "VALIDATION_ERROR",
+                                          "message": "email: must be a well-formed email address",
+                                          "path": "/api/candidates"
+                                        }
+                                        """))),
+                        @ApiResponse(responseCode = "409", description = "Ya existe un postulante con el mismo correo electronico.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class), examples = @ExampleObject(value = """
+                                        {
+                                          "timestamp": "2026-04-20T16:24:04.586976732Z",
+                                          "status": 409,
+                                          "code": "EMAIL_ALREADY_EXISTS",
+                                          "message": "Candidate already exists with email: juan.perez@example.com",
+                                          "path": "/api/candidates"
+                                        }
+                                        """)))
+        })
+        public ResponseEntity<CandidateResponse> create(
+                        @AuthenticationPrincipal Jwt jwt,
+                        @Valid @RequestBody CreateCandidateRequest request,
+                        UriComponentsBuilder uriComponentsBuilder) {
+                Long recruiterId = extractRecruiterId(jwt);
+                Candidate created = candidateUseCase.create(candidateWebMapper.toDomain(request), recruiterId);
+                URI location = uriComponentsBuilder
+                                .path("/api/candidates/{id}")
+                                .buildAndExpand(created.getId())
+                                .toUri();
+
+                return ResponseEntity
+                                .status(HttpStatus.CREATED)
+                                .location(location)
+                                .body(candidateWebMapper.toResponse(created));
+        }
+
+        private Long extractRecruiterId(Jwt jwt) {
+                if (jwt == null) {
+                        throw new InvalidRecruiterException("Authenticated recruiter is required");
+                }
+                Object value = firstPresentClaim(jwt, "recruiterId", "recruiter_id", "userId", "user_id");
+                if (value == null) {
+                        value = jwt.getSubject();
+                }
+                if (value == null || String.valueOf(value).isBlank()) {
+                        throw new InvalidRecruiterException("Authenticated recruiter id is required");
+                }
+                try {
+                        return Long.valueOf(String.valueOf(value));
+                } catch (NumberFormatException ex) {
+                        throw new InvalidRecruiterException("Authenticated recruiter id must be numeric");
+                }
+        }
+
+        private Object firstPresentClaim(Jwt jwt, String... claimNames) {
+                for (String claimName : claimNames) {
+                        Object value = jwt.getClaim(claimName);
+                        if (value != null) {
+                                return value;
+                        }
+                }
+                return null;
+        }
+
+        private Boolean parseEstado(String estado) {
+                if (estado == null || estado.isBlank()) {
+                        return null;
+                }
+
+                return switch (estado.trim().toLowerCase(Locale.ROOT)) {
+                        case "true", "activo", "active" -> true;
+                        case "false", "inactivo", "inactive" -> false;
+                        default -> throw new IllegalArgumentException("Invalid estado filter: " + estado);
+                };
+        }
 }
