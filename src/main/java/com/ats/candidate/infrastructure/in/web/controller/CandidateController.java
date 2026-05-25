@@ -67,16 +67,17 @@ public class CandidateController {
         }
 
         @GetMapping("/{id}")
-        @Operation(summary = "Consultar postulante por id", description = "Devuelve la ficha de un postulante. Requiere JWT con permiso RECRUITER_READ.", responses = {
+        @Operation(summary = "Consultar postulante por id", description = "Devuelve la ficha completa de un postulante, incluyendo perfil profesional, estudios, idiomas, habilidades y adjuntos. Requiere JWT con permiso RECRUITER_READ.", responses = {
                         @ApiResponse(responseCode = "200", description = "Postulante encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CandidateResponse.class))),
-                        @ApiResponse(responseCode = "404", description = "Postulante no encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
                         @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
-                        @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso para consultar postulantes.")
+                        @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso para consultar postulantes."),
+                        @ApiResponse(responseCode = "404", description = "Postulante no encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
         })
         public ResponseEntity<CandidateResponse> getById(@PathVariable Long id) {
                 Candidate candidate = candidateUseCase.getById(id);
                 return ResponseEntity.ok(candidateWebMapper.toResponse(candidate));
         }
+
 
         @PostMapping
         @Operation(summary = "Crear postulante", description = "Crea un postulante activo. El correo electronico debe ser unico.", parameters = {

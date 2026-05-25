@@ -53,6 +53,9 @@ public record CandidateResponse(
         @Schema(description = "Fecha y hora de creacion.", example = "2026-04-20T12:23:57.829836973")
         LocalDateTime createdAt,
 
+        @Schema(description = "Estado actual del proceso de seleccion del postulante.", example = "NEW")
+        String currentState,
+
         CandidateProfessionalProfileResponse professionalProfile,
         Set<CandidateEducationResponse> educations,
         Set<CandidateLanguageResponse> languages,

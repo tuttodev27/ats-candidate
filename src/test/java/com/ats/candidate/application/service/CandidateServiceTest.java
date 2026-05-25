@@ -85,7 +85,9 @@ class CandidateServiceTest {
         lenient().when(catalogValidationPort.existsActiveLanguageLevel(5L)).thenReturn(true);
         lenient().when(catalogValidationPort.existsActiveHardSkill(1L)).thenReturn(true);
         lenient().when(catalogValidationPort.existsActiveSoftSkill(2L)).thenReturn(true);
+        lenient().when(candidateStateRepositoryPort.findLatestByCandidateId(any())).thenReturn(Optional.empty());
     }
+
 
     @Test
     void createPersistsCandidateDetailsAndInitialState() {
@@ -178,6 +180,7 @@ class CandidateServiceTest {
         CandidateHardSkill hardSkill = CandidateHardSkill.builder().id(4L).candidateId(100L).build();
         CandidateSoftSkill softSkill = CandidateSoftSkill.builder().id(5L).candidateId(100L).build();
         Attachment attachment = Attachment.builder().id(6L).candidateId(100L).build();
+        CandidateState state = CandidateState.builder().id(7L).candidateId(100L).state("NEW").build();
 
         when(candidateRepositoryPort.findById(100L)).thenReturn(Optional.of(candidate));
         when(professionalProfileRepositoryPort.findByCandidateId(100L)).thenReturn(Optional.of(profile));
@@ -186,6 +189,7 @@ class CandidateServiceTest {
         when(hardSkillRepositoryPort.findByCandidateId(100L)).thenReturn(List.of(hardSkill));
         when(softSkillRepositoryPort.findByCandidateId(100L)).thenReturn(List.of(softSkill));
         when(attachmentRepositoryPort.findByCandidateId(100L)).thenReturn(List.of(attachment));
+        when(candidateStateRepositoryPort.findLatestByCandidateId(100L)).thenReturn(Optional.of(state));
 
         Candidate result = candidateService.getById(100L);
 
@@ -195,7 +199,48 @@ class CandidateServiceTest {
         assertThat(result.getHardSkills()).containsExactly(hardSkill);
         assertThat(result.getSoftSkills()).containsExactly(softSkill);
         assertThat(result.getAttachments()).containsExactly(attachment);
+        assertThat(result.getStates()).hasSize(1);
+        assertThat(result.getStates().iterator().next().getState()).isEqualTo("NEW");
     }
+
+    @Test
+    void getByIdExposesCurrentStateInFicha() {
+        Candidate candidate = Candidate.builder().id(200L).email("ana@example.com").build();
+        CandidateState state = CandidateState.builder().id(10L).candidateId(200L).state("IN_PROCESS").build();
+
+        when(candidateRepositoryPort.findById(200L)).thenReturn(Optional.of(candidate));
+        when(professionalProfileRepositoryPort.findByCandidateId(200L)).thenReturn(Optional.empty());
+        when(educationRepositoryPort.findByCandidateId(200L)).thenReturn(List.of());
+        when(languageRepositoryPort.findByCandidateId(200L)).thenReturn(List.of());
+        when(hardSkillRepositoryPort.findByCandidateId(200L)).thenReturn(List.of());
+        when(softSkillRepositoryPort.findByCandidateId(200L)).thenReturn(List.of());
+        when(attachmentRepositoryPort.findByCandidateId(200L)).thenReturn(List.of());
+        when(candidateStateRepositoryPort.findLatestByCandidateId(200L)).thenReturn(Optional.of(state));
+
+        Candidate result = candidateService.getById(200L);
+
+        assertThat(result.getStates()).isNotEmpty();
+        assertThat(result.getStates().iterator().next().getState()).isEqualTo("IN_PROCESS");
+    }
+
+    @Test
+    void getByIdReturnsNullCurrentStateWhenNoStateExists() {
+        Candidate candidate = Candidate.builder().id(300L).email("sin@state.com").build();
+
+        when(candidateRepositoryPort.findById(300L)).thenReturn(Optional.of(candidate));
+        when(professionalProfileRepositoryPort.findByCandidateId(300L)).thenReturn(Optional.empty());
+        when(educationRepositoryPort.findByCandidateId(300L)).thenReturn(List.of());
+        when(languageRepositoryPort.findByCandidateId(300L)).thenReturn(List.of());
+        when(hardSkillRepositoryPort.findByCandidateId(300L)).thenReturn(List.of());
+        when(softSkillRepositoryPort.findByCandidateId(300L)).thenReturn(List.of());
+        when(attachmentRepositoryPort.findByCandidateId(300L)).thenReturn(List.of());
+        when(candidateStateRepositoryPort.findLatestByCandidateId(300L)).thenReturn(Optional.empty());
+
+        Candidate result = candidateService.getById(300L);
+
+        assertThat(result.getStates()).isNullOrEmpty();
+    }
+
 
     @Test
     void getByIdRejectsUnknownCandidate() {
