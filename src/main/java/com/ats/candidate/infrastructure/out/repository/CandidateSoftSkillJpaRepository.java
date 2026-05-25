@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface CandidateSoftSkillJpaRepository extends JpaRepository<CandidateSoftSkillEntity, Long> {
     List<CandidateSoftSkillEntity> findByCandidateId(Long candidateId);
+    void deleteAllByCandidateId(Long candidateId);
 }
+

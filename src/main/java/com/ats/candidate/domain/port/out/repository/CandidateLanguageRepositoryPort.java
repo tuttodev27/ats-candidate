@@ -8,4 +8,6 @@ import java.util.Set;
 public interface CandidateLanguageRepositoryPort {
     Set<CandidateLanguage> saveAll(Set<CandidateLanguage> languages);
     List<CandidateLanguage> findByCandidateId(Long candidateId);
+    void deleteAllByCandidateId(Long candidateId);
 }
+
