@@ -5,6 +5,7 @@ import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.CandidateResponse;
 import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
+import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateStatusRequest;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -133,6 +134,36 @@ class CandidateControllerTest {
                 null,
                 null
         );
+    }
+
+    @Test
+    void updateStatusDelegatesToUseCase() {
+        Long candidateId = 1L;
+        UpdateCandidateStatusRequest request = new UpdateCandidateStatusRequest("IN_REVIEW");
+        Candidate updated = Candidate.builder().id(candidateId).build();
+        CandidateResponse response = candidateResponse(candidateId);
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "HS256")
+                .subject("42")
+                .build();
+
+        when(candidateUseCase.updateStatus(candidateId, "IN_REVIEW", 42L)).thenReturn(updated);
+        when(candidateWebMapper.toResponse(updated)).thenReturn(response);
+
+        var result = controller.updateStatus(candidateId, jwt, request);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isEqualTo(response);
+        verify(candidateUseCase).updateStatus(candidateId, "IN_REVIEW", 42L);
+    }
+
+    @Test
+    void updateStatusRejectsMissingAuthenticatedRecruiter() {
+        UpdateCandidateStatusRequest request = new UpdateCandidateStatusRequest("IN_REVIEW");
+
+        assertThatThrownBy(() -> controller.updateStatus(1L, null, request))
+                .isInstanceOf(InvalidRecruiterException.class)
+                .hasMessageContaining("Authenticated recruiter is required");
     }
 }
 

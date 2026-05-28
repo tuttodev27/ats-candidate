@@ -395,6 +395,56 @@ class CandidateServiceTest {
         verify(candidateRepositoryPort, never()).update(any());
     }
 
+    @Test
+    void updateStatusSuccessfullyPersistsNewState() {
+        Long candidateId = 100L;
+        String newStatus = "IN_REVIEW";
+        Long recruiterId = 42L;
+
+        Candidate candidate = Candidate.builder().id(candidateId).email("juan@example.com").build();
+        CandidateState state = CandidateState.builder().id(10L).candidateId(candidateId).state(newStatus).build();
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(candidateRepositoryPort.findById(candidateId)).thenReturn(Optional.of(candidate));
+        when(candidateStateRepositoryPort.findLatestByCandidateId(candidateId)).thenReturn(Optional.of(state));
+
+        Candidate result = candidateService.updateStatus(candidateId, newStatus, recruiterId);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getStates()).isNotEmpty();
+        assertThat(result.getStates().iterator().next().getState()).isEqualTo(newStatus);
+
+        ArgumentCaptor<CandidateState> stateCaptor = ArgumentCaptor.forClass(CandidateState.class);
+        verify(candidateStateRepositoryPort).save(stateCaptor.capture());
+        assertThat(stateCaptor.getValue().getCandidateId()).isEqualTo(candidateId);
+        assertThat(stateCaptor.getValue().getState()).isEqualTo(newStatus);
+        assertThat(stateCaptor.getValue().getCreatedBy()).isEqualTo(recruiterId);
+        assertThat(stateCaptor.getValue().getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    void updateStatusThrowsExceptionWhenCandidateNotFound() {
+        Long candidateId = 404L;
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.updateStatus(candidateId, "IN_REVIEW", 42L))
+                .isInstanceOf(CandidateNotFoundException.class);
+
+        verify(candidateStateRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    void updateStatusThrowsExceptionWhenStateIsInvalid() {
+        Long candidateId = 100L;
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+
+        assertThatThrownBy(() -> candidateService.updateStatus(candidateId, "INVALID_STATE_VALUE", 42L))
+                .isInstanceOf(com.ats.candidate.domain.exception.InvalidCandidateStateException.class)
+                .hasMessageContaining("Invalid candidate status: INVALID_STATE_VALUE");
+
+        verify(candidateStateRepositoryPort, never()).save(any());
+    }
+
     private Candidate candidateWithDetails() {
         return Candidate.builder()
                 .firstName("Juan")

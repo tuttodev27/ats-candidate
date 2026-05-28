@@ -6,6 +6,7 @@ import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.CandidateResponse;
 import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateRequest;
+import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateStatusRequest;
 import com.ats.candidate.infrastructure.in.web.exception.ErrorResponse;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -137,6 +139,23 @@ public class CandidateController {
                         @Valid @RequestBody UpdateCandidateRequest request) {
                 Long recruiterId = extractRecruiterId(jwt);
                 Candidate updated = candidateUseCase.update(id, candidateWebMapper.toDomain(request), recruiterId);
+                return ResponseEntity.ok(candidateWebMapper.toResponse(updated));
+        }
+
+        @PatchMapping("/{id}/status")
+        @Operation(summary = "Change candidate status", description = "Updates the selection process status of a candidate. Requires JWT with RECRUITER_WRITE authority.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Candidate status successfully updated.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CandidateResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "Invalid request body or status value.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token."),
+                        @ApiResponse(responseCode = "403", description = "User does not have RECRUITER_WRITE permission."),
+                        @ApiResponse(responseCode = "404", description = "Candidate not found.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        public ResponseEntity<CandidateResponse> updateStatus(
+                        @PathVariable Long id,
+                        @AuthenticationPrincipal Jwt jwt,
+                        @Valid @RequestBody UpdateCandidateStatusRequest request) {
+                Long recruiterId = extractRecruiterId(jwt);
+                Candidate updated = candidateUseCase.updateStatus(id, request.status(), recruiterId);
                 return ResponseEntity.ok(candidateWebMapper.toResponse(updated));
         }
 
