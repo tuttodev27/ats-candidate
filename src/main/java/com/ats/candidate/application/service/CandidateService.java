@@ -381,5 +381,14 @@ public class CandidateService implements CandidateUseCase {
 
         return getById(id);
     }
+
+    @Override
+    @Transactional
+    public void deactivate(Long id, Long recruiterId) {
+        if (!candidateRepositoryPort.existsById(id)) {
+            throw new CandidateNotFoundException(id);
+        }
+        candidateRepositoryPort.deactivate(id, recruiterId);
+    }
 }
 

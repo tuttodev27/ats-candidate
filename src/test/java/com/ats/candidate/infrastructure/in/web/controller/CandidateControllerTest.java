@@ -165,5 +165,26 @@ class CandidateControllerTest {
                 .isInstanceOf(InvalidRecruiterException.class)
                 .hasMessageContaining("Authenticated recruiter is required");
     }
+
+    @Test
+    void deactivateEndpointReturnsNoContentOnSuccess() {
+        Long candidateId = 1L;
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "HS256")
+                .subject("42")
+                .build();
+
+        var result = controller.deactivate(candidateId, jwt);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        verify(candidateUseCase).deactivate(candidateId, 42L);
+    }
+
+    @Test
+    void deactivateEndpointRejectsMissingAuthenticatedRecruiter() {
+        assertThatThrownBy(() -> controller.deactivate(1L, null))
+                .isInstanceOf(InvalidRecruiterException.class)
+                .hasMessageContaining("Authenticated recruiter is required");
+    }
 }
 

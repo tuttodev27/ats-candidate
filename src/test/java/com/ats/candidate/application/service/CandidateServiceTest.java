@@ -445,6 +445,31 @@ class CandidateServiceTest {
         verify(candidateStateRepositoryPort, never()).save(any());
     }
 
+    @Test
+    void deactivateSuccessfullyMarksCandidateAsInactive() {
+        Long candidateId = 100L;
+        Long recruiterId = 42L;
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+
+        candidateService.deactivate(candidateId, recruiterId);
+
+        verify(candidateRepositoryPort).deactivate(candidateId, recruiterId);
+    }
+
+    @Test
+    void deactivateThrowsExceptionWhenCandidateNotFound() {
+        Long candidateId = 404L;
+        Long recruiterId = 42L;
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.deactivate(candidateId, recruiterId))
+                .isInstanceOf(CandidateNotFoundException.class);
+
+        verify(candidateRepositoryPort, never()).deactivate(any(), any());
+    }
+
     private Candidate candidateWithDetails() {
         return Candidate.builder()
                 .firstName("Juan")
