@@ -34,22 +34,38 @@ class CandidateControllerTest {
         PageRequest pageable = PageRequest.of(0, 20);
         Candidate candidate = Candidate.builder().id(1L).active(true).build();
         CandidateResponse response = candidateResponse(1L);
-        when(candidateUseCase.list(true, pageable)).thenReturn(new PageImpl<>(List.of(candidate), pageable, 1));
+        when(candidateUseCase.list(true, null, pageable)).thenReturn(new PageImpl<>(List.of(candidate), pageable, 1));
         when(candidateWebMapper.toResponse(candidate)).thenReturn(response);
 
-        var result = controller.list(null, "activo", pageable);
+        var result = controller.list(null, "activo", null, pageable);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getContent()).containsExactly(response);
-        verify(candidateUseCase).list(true, pageable);
+        verify(candidateUseCase).list(true, null, pageable);
+    }
+
+    @Test
+    void listAcceptsSearchAndActiveFilters() {
+        PageRequest pageable = PageRequest.of(0, 20);
+        Candidate candidate = Candidate.builder().id(1L).active(false).build();
+        CandidateResponse response = candidateResponse(1L);
+        when(candidateUseCase.list(false, "perez", pageable)).thenReturn(new PageImpl<>(List.of(candidate), pageable, 1));
+        when(candidateWebMapper.toResponse(candidate)).thenReturn(response);
+
+        var result = controller.list(false, null, "perez", pageable);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getContent()).containsExactly(response);
+        verify(candidateUseCase).list(false, "perez", pageable);
     }
 
     @Test
     void listRejectsUnknownEstadoFilter() {
         PageRequest pageable = PageRequest.of(0, 20);
 
-        assertThatThrownBy(() -> controller.list(null, "archivado", pageable))
+        assertThatThrownBy(() -> controller.list(null, "archivado", null, pageable))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid estado filter");
     }
