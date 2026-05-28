@@ -13,5 +13,6 @@ public interface CandidateRepositoryPort {
     Candidate update(Candidate candidate);
     Page<Candidate> findAll(Boolean active, Pageable pageable);
     Optional<Candidate> findById(Long id);
+    void deactivate(Long id, Long recruiterId);
 }
 

@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -157,6 +158,21 @@ public class CandidateController {
                 Long recruiterId = extractRecruiterId(jwt);
                 Candidate updated = candidateUseCase.updateStatus(id, request.status(), recruiterId);
                 return ResponseEntity.ok(candidateWebMapper.toResponse(updated));
+        }
+
+        @DeleteMapping("/{id}")
+        @Operation(summary = "Desactivar postulante", description = "Realiza el borrado logico de un postulante cambiandolo a inactivo. Requiere JWT con permiso RECRUITER_WRITE.", responses = {
+                        @ApiResponse(responseCode = "204", description = "Postulante desactivado correctamente."),
+                        @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
+                        @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso para desactivar postulantes."),
+                        @ApiResponse(responseCode = "404", description = "Postulante no encontrado.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        public ResponseEntity<Void> deactivate(
+                        @PathVariable Long id,
+                        @AuthenticationPrincipal Jwt jwt) {
+                Long recruiterId = extractRecruiterId(jwt);
+                candidateUseCase.deactivate(id, recruiterId);
+                return ResponseEntity.noContent().build();
         }
 
 

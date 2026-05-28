@@ -80,5 +80,15 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
         return candidatePersistenceMapper.toDomain(candidateJpaRepository.save(existing));
     }
 
+    @Override
+    public void deactivate(Long id, Long recruiterId) {
+        CandidateEntity existing = candidateJpaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Candidate not found with id: " + id));
+        existing.setActive(false);
+        existing.setUpdatedAt(java.time.LocalDateTime.now());
+        existing.setUpdatedBy(recruiterId);
+        candidateJpaRepository.save(existing);
+    }
+
 }
 

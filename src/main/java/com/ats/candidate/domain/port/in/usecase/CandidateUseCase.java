@@ -10,5 +10,6 @@ public interface CandidateUseCase {
     Page<Candidate> list(Boolean active, Pageable pageable);
     Candidate getById(Long id);
     Candidate updateStatus(Long id, String status, Long recruiterId);
+    void deactivate(Long id, Long recruiterId);
 }
 

@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .hasAuthority("RECRUITER_WRITE")
                         .requestMatchers(HttpMethod.PATCH, "/api/candidates/*/status")
                         .hasAuthority("RECRUITER_WRITE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/candidates/*")
+                        .hasAuthority("RECRUITER_WRITE")
                         .anyRequest()
                         .permitAll()
                 )
