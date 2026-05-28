@@ -133,8 +133,8 @@ public class CandidateService implements CandidateUseCase {
 
 
     @Override
-    public Page<Candidate> list(Boolean active, Pageable pageable) {
-        return candidateRepositoryPort.findAll(active, pageable)
+    public Page<Candidate> list(Boolean active, String search, Pageable pageable) {
+        return candidateRepositoryPort.findAll(active, search, pageable)
                 .map(this::loadDetails);
     }
 

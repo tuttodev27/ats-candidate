@@ -64,9 +64,10 @@ public class CandidateController {
         public ResponseEntity<Page<CandidateResponse>> list(
                         @RequestParam(required = false) Boolean active,
                         @RequestParam(required = false) String estado,
+                        @RequestParam(required = false) String search,
                         @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
                 Boolean activeFilter = active != null ? active : parseEstado(estado);
-                Page<CandidateResponse> candidates = candidateUseCase.list(activeFilter, pageable)
+                Page<CandidateResponse> candidates = candidateUseCase.list(activeFilter, search, pageable)
                                 .map(candidateWebMapper::toResponse);
 
                 return ResponseEntity.ok(candidates);

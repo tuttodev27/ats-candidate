@@ -47,12 +47,8 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
     }
 
     @Override
-    public Page<Candidate> findAll(Boolean active, Pageable pageable) {
-        if (active == null) {
-            return candidateJpaRepository.findAll(pageable)
-                    .map(candidatePersistenceMapper::toDomain);
-        }
-        return candidateJpaRepository.findByActive(active, pageable)
+    public Page<Candidate> findAll(Boolean active, String search, Pageable pageable) {
+        return candidateJpaRepository.findByActiveAndSearch(active, search, pageable)
                 .map(candidatePersistenceMapper::toDomain);
     }
 

@@ -11,7 +11,7 @@ public interface CandidateRepositoryPort {
     boolean existsById(Long id);
     Candidate save(Candidate candidate);
     Candidate update(Candidate candidate);
-    Page<Candidate> findAll(Boolean active, Pageable pageable);
+    Page<Candidate> findAll(Boolean active, String search, Pageable pageable);
     Optional<Candidate> findById(Long id);
     void deactivate(Long id, Long recruiterId);
 }

@@ -264,7 +264,7 @@ class CandidateServiceTest {
     void listPassesActiveFilterAndLoadsDetails() {
         PageRequest pageable = PageRequest.of(0, 20);
         Candidate candidate = Candidate.builder().id(100L).active(true).build();
-        when(candidateRepositoryPort.findAll(true, pageable))
+        when(candidateRepositoryPort.findAll(true, null, pageable))
                 .thenReturn(new PageImpl<>(List.of(candidate), pageable, 1));
         when(professionalProfileRepositoryPort.findByCandidateId(100L)).thenReturn(Optional.empty());
         when(educationRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
@@ -273,11 +273,30 @@ class CandidateServiceTest {
         when(softSkillRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
         when(attachmentRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
 
-        Page<Candidate> result = candidateService.list(true, pageable);
+        Page<Candidate> result = candidateService.list(true, null, pageable);
 
         assertThat(result.getContent()).containsExactly(candidate);
-        verify(candidateRepositoryPort).findAll(true, pageable);
+        verify(candidateRepositoryPort).findAll(true, null, pageable);
         verify(attachmentRepositoryPort).findByCandidateId(100L);
+    }
+
+    @Test
+    void listPassesActiveAndSearchFiltersToRepositoryPort() {
+        PageRequest pageable = PageRequest.of(0, 20);
+        Candidate candidate = Candidate.builder().id(100L).active(false).build();
+        when(candidateRepositoryPort.findAll(false, "perez", pageable))
+                .thenReturn(new PageImpl<>(List.of(candidate), pageable, 1));
+        when(professionalProfileRepositoryPort.findByCandidateId(100L)).thenReturn(Optional.empty());
+        when(educationRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
+        when(languageRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
+        when(hardSkillRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
+        when(softSkillRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
+        when(attachmentRepositoryPort.findByCandidateId(100L)).thenReturn(List.of());
+
+        Page<Candidate> result = candidateService.list(false, "perez", pageable);
+
+        assertThat(result.getContent()).containsExactly(candidate);
+        verify(candidateRepositoryPort).findAll(false, "perez", pageable);
     }
 
     @Test
