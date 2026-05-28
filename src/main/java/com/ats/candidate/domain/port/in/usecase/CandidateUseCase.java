@@ -9,5 +9,6 @@ public interface CandidateUseCase {
     Candidate update(Long id, Candidate candidate, Long recruiterId);
     Page<Candidate> list(Boolean active, Pageable pageable);
     Candidate getById(Long id);
+    Candidate updateStatus(Long id, String status, Long recruiterId);
 }
 

@@ -3,6 +3,7 @@ package com.ats.candidate.application.service;
 import com.ats.candidate.domain.exception.CandidateNotFoundException;
 import com.ats.candidate.domain.exception.EmailAlreadyExistException;
 import com.ats.candidate.domain.exception.InvalidCatalogReferenceException;
+import com.ats.candidate.domain.exception.InvalidCandidateStateException;
 import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.model.CandidateEducation;
 import com.ats.candidate.domain.model.CandidateExperience;
@@ -40,6 +41,7 @@ import java.time.LocalDateTime;
 public class CandidateService implements CandidateUseCase {
 
     private static final String INITIAL_STATE = "NEW";
+    private static final Set<String> ALLOWED_STATES = Set.of("NEW", "IN_REVIEW", "INTERVIEW", "SHORTLIST", "REJECTED", "HIRED");
 
     private final CandidateRepositoryPort candidateRepositoryPort;
     private final CandidateCatalogValidationPort catalogValidationPort;
@@ -356,6 +358,28 @@ public class CandidateService implements CandidateUseCase {
     private void prepareNote(CandidateNote note, Long recruiterId, LocalDateTime now) {
         note.setCreatedBy(String.valueOf(recruiterId));
         note.setCreatedAt(now.toString());
+    }
+
+    @Override
+    @Transactional
+    public Candidate updateStatus(Long id, String status, Long recruiterId) {
+        if (!candidateRepositoryPort.existsById(id)) {
+            throw new CandidateNotFoundException(id);
+        }
+
+        if (status == null || !ALLOWED_STATES.contains(status)) {
+            throw new InvalidCandidateStateException("Invalid candidate status: " + status);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        candidateStateRepositoryPort.save(CandidateState.builder()
+                .candidateId(id)
+                .state(status)
+                .createdAt(now)
+                .createdBy(recruiterId)
+                .build());
+
+        return getById(id);
     }
 }
 

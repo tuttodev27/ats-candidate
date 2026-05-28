@@ -6,6 +6,7 @@ import com.ats.candidate.domain.exception.AttachmentStorageException;
 import com.ats.candidate.domain.exception.InvalidCatalogReferenceException;
 import com.ats.candidate.domain.exception.InvalidAttachmentException;
 import com.ats.candidate.domain.exception.InvalidRecruiterException;
+import com.ats.candidate.domain.exception.InvalidCandidateStateException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -127,6 +128,19 @@ public class GlobalExceptionHandler {
                         HttpStatus.CONFLICT.value(),
                         "EMAIL_ALREADY_EXISTS",
                         "Candidate already exists with this email",
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    @ExceptionHandler(InvalidCandidateStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCandidateState(InvalidCandidateStateException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        "INVALID_CANDIDATE_STATE",
+                        ex.getMessage(),
                         request.getRequestURI()
                 )
         );
