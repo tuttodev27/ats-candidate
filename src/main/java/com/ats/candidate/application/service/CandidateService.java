@@ -268,13 +268,12 @@ public class CandidateService implements CandidateUseCase {
         if (candidate.getHardSkills() == null) {
             return;
         }
-        candidate.getHardSkills().stream()
-                .map(CandidateHardSkill::getHardSkillId)
-                .filter(id -> id != null && !catalogValidationPort.existsActiveHardSkill(id))
-                .findFirst()
-                .ifPresent(id -> {
-                    throw new InvalidCatalogReferenceException("Invalid or inactive hardSkillId: " + id);
-                });
+        for (CandidateHardSkill hardSkill : candidate.getHardSkills()) {
+            Long id = hardSkill.getHardSkillId();
+            if (id == null || !catalogValidationPort.existsActiveHardSkill(id)) {
+                throw new InvalidCatalogReferenceException("Invalid or inactive hardSkillId: " + id);
+            }
+        }
     }
 
     private void validateSoftSkills(Candidate candidate) {
