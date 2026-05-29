@@ -8,7 +8,6 @@ import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateStatusRequest;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
