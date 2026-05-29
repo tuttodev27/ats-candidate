@@ -237,7 +237,7 @@ public class CandidateService implements CandidateUseCase {
         }
         for (CandidateEducation education : candidate.getEducations()) {
             Long id = education.getEducationLevelId();
-            if (id != null && !catalogValidationPort.existsActiveEducationLevel(id)) {
+            if (id == null || !catalogValidationPort.existsActiveEducationLevel(id)) {
                 throw new InvalidCatalogReferenceException("Invalid or inactive educationLevelId: " + id);
             }
             if (education.getStartDate() != null && education.getEndDate() != null
