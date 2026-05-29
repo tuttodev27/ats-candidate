@@ -280,13 +280,12 @@ public class CandidateService implements CandidateUseCase {
         if (candidate.getSoftSkills() == null) {
             return;
         }
-        candidate.getSoftSkills().stream()
-                .map(CandidateSoftSkill::getSoftSkillId)
-                .filter(id -> id != null && !catalogValidationPort.existsActiveSoftSkill(id))
-                .findFirst()
-                .ifPresent(id -> {
-                    throw new InvalidCatalogReferenceException("Invalid or inactive softSkillId: " + id);
-                });
+        for (CandidateSoftSkill softSkill : candidate.getSoftSkills()) {
+            Long id = softSkill.getSoftSkillId();
+            if (id == null || !catalogValidationPort.existsActiveSoftSkill(id)) {
+                throw new InvalidCatalogReferenceException("Invalid or inactive softSkillId: " + id);
+            }
+        }
     }
 
     private Candidate loadDetails(Candidate candidate) {
