@@ -35,13 +35,19 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Set;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import com.ats.candidate.domain.model.CandidateStatus;
 
 
 @Service
 public class CandidateService implements CandidateUseCase {
 
     private static final String INITIAL_STATE = "NEW";
-    private static final Set<String> ALLOWED_STATES = Set.of("NEW", "IN_REVIEW", "INTERVIEW", "SHORTLIST", "REJECTED", "HIRED");
+    private static final Set<String> ALLOWED_STATES = Arrays.stream(CandidateStatus.values())
+            .map(CandidateStatus::name)
+            .collect(Collectors.toSet());
 
     private final CandidateRepositoryPort candidateRepositoryPort;
     private final CandidateCatalogValidationPort catalogValidationPort;
@@ -389,6 +395,11 @@ public class CandidateService implements CandidateUseCase {
             throw new CandidateNotFoundException(id);
         }
         candidateRepositoryPort.deactivate(id, recruiterId);
+    }
+
+    @Override
+    public List<CandidateStatus> getStatuses() {
+        return Arrays.asList(CandidateStatus.values());
     }
 }
 

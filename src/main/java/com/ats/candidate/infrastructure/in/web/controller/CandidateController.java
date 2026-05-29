@@ -7,8 +7,10 @@ import com.ats.candidate.infrastructure.in.web.dto.CandidateResponse;
 import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateStatusRequest;
+import com.ats.candidate.infrastructure.in.web.dto.CandidateStatusResponse;
 import com.ats.candidate.infrastructure.in.web.exception.ErrorResponse;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -71,6 +73,20 @@ public class CandidateController {
                                 .map(candidateWebMapper::toResponse);
 
                 return ResponseEntity.ok(candidates);
+        }
+
+        @GetMapping("/statuses")
+        @Operation(summary = "Consultar catalogo de estados del postulante", description = "Devuelve los estados posibles de un postulante. Requiere JWT con permiso RECRUITER_READ.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Catalogo de estados."),
+                        @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
+                        @ApiResponse(responseCode = "403", description = "El usuario no tiene permiso RECRUITER_READ.")
+        })
+        public ResponseEntity<List<CandidateStatusResponse>> getStatuses() {
+                List<CandidateStatusResponse> statuses = candidateUseCase.getStatuses()
+                                .stream()
+                                .map(status -> new CandidateStatusResponse(status.name(), status.getLabel()))
+                                .toList();
+                return ResponseEntity.ok(statuses);
         }
 
         @GetMapping("/{id}")
