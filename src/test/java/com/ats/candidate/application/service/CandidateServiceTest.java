@@ -489,6 +489,19 @@ class CandidateServiceTest {
         verify(candidateRepositoryPort, never()).deactivate(any(), any());
     }
 
+    @Test
+    void getStatusesReturnsAllAvailableStates() {
+        var statuses = candidateService.getStatuses();
+        assertThat(statuses).containsExactly(
+                com.ats.candidate.domain.model.CandidateStatus.NEW,
+                com.ats.candidate.domain.model.CandidateStatus.IN_REVIEW,
+                com.ats.candidate.domain.model.CandidateStatus.INTERVIEW,
+                com.ats.candidate.domain.model.CandidateStatus.SHORTLIST,
+                com.ats.candidate.domain.model.CandidateStatus.REJECTED,
+                com.ats.candidate.domain.model.CandidateStatus.HIRED
+        );
+    }
+
     private Candidate candidateWithDetails() {
         return Candidate.builder()
                 .firstName("Juan")

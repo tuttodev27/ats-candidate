@@ -102,6 +102,23 @@ class CandidateControllerTest {
                 .hasMessageContaining("Authenticated recruiter is required");
     }
 
+    @Test
+    void getStatusesReturnsCatalogList() {
+        when(candidateUseCase.getStatuses()).thenReturn(List.of(
+                com.ats.candidate.domain.model.CandidateStatus.NEW,
+                com.ats.candidate.domain.model.CandidateStatus.IN_REVIEW
+        ));
+
+        var result = controller.getStatuses();
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).containsExactly(
+                new com.ats.candidate.infrastructure.in.web.dto.CandidateStatusResponse("NEW", "Nuevo"),
+                new com.ats.candidate.infrastructure.in.web.dto.CandidateStatusResponse("IN_REVIEW", "En revisión")
+        );
+        verify(candidateUseCase).getStatuses();
+    }
+
     private CreateCandidateRequest createCandidateRequest() {
         return new CreateCandidateRequest(
                 "Juan",
