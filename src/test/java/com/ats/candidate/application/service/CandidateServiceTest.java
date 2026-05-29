@@ -313,6 +313,19 @@ class CandidateServiceTest {
     }
 
     @Test
+    void createRejectsInactiveExperienceRangeReference() {
+        Candidate candidate = candidateWithDetails();
+        when(candidateRepositoryPort.existsByEmail(candidate.getEmail())).thenReturn(false);
+        when(catalogValidationPort.existsActiveExperienceRange(4L)).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.create(candidate, 9L))
+                .isInstanceOf(InvalidCatalogReferenceException.class)
+                .hasMessageContaining("experienceRangeId");
+
+        verify(candidateRepositoryPort, never()).save(any());
+    }
+
+    @Test
     void createRejectsInactiveLanguageLevelReference() {
         Candidate candidate = candidateWithDetails();
         when(candidateRepositoryPort.existsByEmail(candidate.getEmail())).thenReturn(false);
