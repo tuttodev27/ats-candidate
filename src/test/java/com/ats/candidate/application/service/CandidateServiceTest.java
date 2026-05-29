@@ -339,6 +339,37 @@ class CandidateServiceTest {
     }
 
     @Test
+    void createRejectsMissingEducationLevelReference() {
+        Candidate candidate = candidateWithDetails();
+        CandidateEducation education = candidate.getEducations().iterator().next();
+        education.setEducationLevelId(null);
+
+        when(candidateRepositoryPort.existsByEmail(candidate.getEmail())).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.create(candidate, 9L))
+                .isInstanceOf(InvalidCatalogReferenceException.class)
+                .hasMessageContaining("educationLevelId");
+
+        verify(candidateRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    void createRejectsInactiveEducationLevelReference() {
+        Candidate candidate = candidateWithDetails();
+        CandidateEducation education = candidate.getEducations().iterator().next();
+        education.setEducationLevelId(999L);
+
+        when(candidateRepositoryPort.existsByEmail(candidate.getEmail())).thenReturn(false);
+        when(catalogValidationPort.existsActiveEducationLevel(999L)).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.create(candidate, 9L))
+                .isInstanceOf(InvalidCatalogReferenceException.class)
+                .hasMessageContaining("educationLevelId");
+
+        verify(candidateRepositoryPort, never()).save(any());
+    }
+
+    @Test
     void createRejectsEducationWithInvalidDates() {
         Candidate candidate = candidateWithDetails();
         CandidateEducation education = candidate.getEducations().iterator().next();
