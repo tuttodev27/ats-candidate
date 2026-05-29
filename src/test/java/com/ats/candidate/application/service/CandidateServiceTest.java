@@ -182,6 +182,22 @@ class CandidateServiceTest {
     }
 
     @Test
+    void createRejectsMissingHardSkillReference() {
+        Candidate candidate = candidateWithDetails();
+        CandidateHardSkill hardSkill = candidate.getHardSkills().iterator().next();
+        hardSkill.setHardSkillId(null);
+
+        when(candidateRepositoryPort.existsByEmail(candidate.getEmail())).thenReturn(false);
+
+        assertThatThrownBy(() -> candidateService.create(candidate, 9L))
+                .isInstanceOf(InvalidCatalogReferenceException.class)
+                .hasMessageContaining("hardSkillId");
+
+        verify(candidateRepositoryPort, never()).save(any());
+        verify(candidateStateRepositoryPort, never()).save(any());
+    }
+
+    @Test
     void getByIdLoadsAllCandidateDetails() {
         Candidate candidate = Candidate.builder().id(100L).email("juan@example.com").build();
         CandidateProfessionalProfile profile = CandidateProfessionalProfile.builder().id(1L).candidateId(100L).build();
