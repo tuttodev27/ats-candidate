@@ -73,4 +73,34 @@ public class CandidateCatalogValidationAdapter implements CandidateCatalogValida
     public boolean existsActiveSoftSkill(Long id) {
         return id != null && softSkillJpaRepository.existsByIdAndActiveTrue(id);
     }
+
+    @Override
+    public java.util.List<String> getActiveHardSkillNames() {
+        return hardSkillJpaRepository.findAll().stream()
+                .filter(s -> s.getActive() != null && s.getActive())
+                .map(com.ats.candidate.infrastructure.out.entity.HardSkillEntity::getName)
+                .toList();
+    }
+
+    @Override
+    public java.util.List<String> getActiveSoftSkillNames() {
+        return softSkillJpaRepository.findAll().stream()
+                .filter(s -> s.getActive() != null && s.getActive())
+                .map(com.ats.candidate.infrastructure.out.entity.SoftSkillEntity::getName)
+                .toList();
+    }
+
+    @Override
+    public java.util.Optional<Long> findHardSkillIdByName(String name) {
+        if (name == null || name.isBlank()) return java.util.Optional.empty();
+        return hardSkillJpaRepository.findByNameIgnoreCaseAndActiveTrue(name.trim())
+                .map(com.ats.candidate.infrastructure.out.entity.HardSkillEntity::getId);
+    }
+
+    @Override
+    public java.util.Optional<Long> findSoftSkillIdByName(String name) {
+        if (name == null || name.isBlank()) return java.util.Optional.empty();
+        return softSkillJpaRepository.findByNameIgnoreCaseAndActiveTrue(name.trim())
+                .map(com.ats.candidate.infrastructure.out.entity.SoftSkillEntity::getId);
+    }
 }

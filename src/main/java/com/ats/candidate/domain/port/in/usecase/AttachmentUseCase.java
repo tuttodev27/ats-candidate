@@ -8,4 +8,5 @@ import java.util.List;
 public interface AttachmentUseCase {
     Attachment uploadCv(Long candidateId, AttachmentUpload upload);
     List<Attachment> listByCandidateId(Long candidateId);
+    Attachment parse(Long candidateId, Long attachmentId);
 }

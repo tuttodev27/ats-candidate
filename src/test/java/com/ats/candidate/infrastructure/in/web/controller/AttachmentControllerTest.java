@@ -102,4 +102,31 @@ class AttachmentControllerTest {
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).containsExactly(response);
     }
+
+    @Test
+    void parseCvTriggersUsecaseAndReturnsMappedResponse() {
+        Long candidateId = 10L;
+        Long attachmentId = 99L;
+        Attachment attachment = Attachment.builder().id(attachmentId).candidateId(candidateId).build();
+        AttachmentResponse response = new AttachmentResponse(
+                attachmentId,
+                candidateId,
+                "cv.pdf",
+                "candidates/10/cv.pdf",
+                "application/pdf",
+                3L,
+                "checksum",
+                null,
+                7L,
+                "COMPLETED"
+        );
+        when(attachmentUseCase.parse(candidateId, attachmentId)).thenReturn(attachment);
+        when(candidateWebMapper.toResponse(attachment)).thenReturn(response);
+
+        var result = controller.parseCv(candidateId, attachmentId);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isEqualTo(response);
+        verify(attachmentUseCase).parse(candidateId, attachmentId);
+    }
 }

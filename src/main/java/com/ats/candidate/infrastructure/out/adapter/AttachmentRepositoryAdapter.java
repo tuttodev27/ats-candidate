@@ -7,6 +7,7 @@ import com.ats.candidate.infrastructure.out.repository.AttachmentJpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class AttachmentRepositoryAdapter implements AttachmentRepositoryPort {
@@ -35,5 +36,11 @@ public class AttachmentRepositoryAdapter implements AttachmentRepositoryPort {
                 .stream()
                 .map(attachmentPersistenceMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Attachment> findById(Long id) {
+        return attachmentJpaRepository.findById(id)
+                .map(attachmentPersistenceMapper::toDomain);
     }
 }

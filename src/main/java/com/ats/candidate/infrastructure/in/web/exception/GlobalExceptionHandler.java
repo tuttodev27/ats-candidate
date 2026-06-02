@@ -7,6 +7,7 @@ import com.ats.candidate.domain.exception.InvalidCatalogReferenceException;
 import com.ats.candidate.domain.exception.InvalidAttachmentException;
 import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.exception.InvalidCandidateStateException;
+import com.ats.candidate.domain.exception.AttachmentParsingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -140,6 +141,19 @@ public class GlobalExceptionHandler {
                         Instant.now(),
                         HttpStatus.BAD_REQUEST.value(),
                         "INVALID_CANDIDATE_STATE",
+                        ex.getMessage(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    @ExceptionHandler(AttachmentParsingException.class)
+    public ResponseEntity<ErrorResponse> handleAttachmentParsing(AttachmentParsingException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        "ATTACHMENT_PARSING_ERROR",
                         ex.getMessage(),
                         request.getRequestURI()
                 )

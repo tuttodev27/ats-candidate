@@ -37,5 +37,23 @@ class LocalAttachmentStorageAdapterTest {
         Path storedPath = tempDir.resolve(stored.getFileUrl()).normalize();
         assertThat(storedPath).startsWith(tempDir.resolve("candidates").resolve("10"));
         assertThat(Files.readAllBytes(storedPath)).isEqualTo(content);
+     }
+
+    @Test
+    void loadReadsStoredFileSuccessfully() throws Exception {
+        LocalAttachmentStorageAdapter adapter = new LocalAttachmentStorageAdapter(tempDir.toString());
+        byte[] content = "some-file-bytes".getBytes(StandardCharsets.UTF_8);
+        AttachmentUpload upload = AttachmentUpload.builder()
+                .originalFileName("cv_to_load.pdf")
+                .contentType("application/pdf")
+                .size((long) content.length)
+                .content(content)
+                .uploadedBy(7L)
+                .build();
+
+        StoredAttachment stored = adapter.store(10L, upload);
+        byte[] loadedContent = adapter.load(stored.getFileUrl());
+        
+        assertThat(loadedContent).isEqualTo(content);
     }
 }
