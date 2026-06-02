@@ -59,6 +59,17 @@ public class AttachmentController {
                 .toList());
     }
 
+    @PostMapping("/{attachmentId}/parse")
+    @Operation(summary = "Parsear CV de un postulante manualmente")
+    public ResponseEntity<AttachmentResponse> parseCv(
+            @PathVariable Long candidateId,
+            @PathVariable Long attachmentId
+    ) {
+        return ResponseEntity.ok(candidateWebMapper.toResponse(
+                attachmentUseCase.parse(candidateId, attachmentId)
+        ));
+    }
+
     private AttachmentUpload toUpload(MultipartFile file, Long recruiterId) {
         try {
             return AttachmentUpload.builder()

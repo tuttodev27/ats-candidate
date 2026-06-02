@@ -42,4 +42,14 @@ public class LocalAttachmentStorageAdapter implements AttachmentStoragePort {
             throw new AttachmentStorageException("Could not store attachment file", ex);
         }
     }
+
+    @Override
+    public byte[] load(String fileUrl) {
+        Path target = storageRoot.resolve(fileUrl).normalize();
+        try {
+            return Files.readAllBytes(target);
+        } catch (IOException ex) {
+            throw new AttachmentStorageException("Could not read attachment file: " + fileUrl, ex);
+        }
+    }
 }
