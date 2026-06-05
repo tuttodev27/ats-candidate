@@ -1,0 +1,300 @@
+{
+  "info": {
+    "name": "ATS Candidate",
+    "description": "Colección para pruebas del módulo ats-candidate.\n\nAutenticación: JWT Bearer token con permisos RECRUITER_WRITE.\n\nPara generar un token JWT de prueba: https://jwt.io con:\n- Algorithm: HS256\n- Secret: local-development-secret-key-change-me-ats-candidate\n- Payload:\n```json\n{\n  \"sub\": \"1\",\n  \"recruiterId\": 1,\n  \"permissions\": [\"RECRUITER_WRITE\"]\n}\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Candidates",
+      "item": [
+        {
+          "name": "Crear postulante (solo datos basicos)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Tiene Location header\", () => {",
+                  "    pm.response.to.have.header(\"Location\");",
+                  "});",
+                  "pm.test(\"Respuesta incluye datos basicos\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.id).to.not.be.null;",
+                  "    pm.expect(json.firstName).to.eql(\"Juan\");",
+                  "    pm.expect(json.lastName).to.eql(\"Perez\");",
+                  "    pm.expect(json.email).to.eql(\"juan.perez@example.com\");",
+                  "    pm.expect(json.active).to.be.true;",
+                  "});",
+                  "pm.test(\"Respuesta incluye estado NEW\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.currentState).to.not.be.null;",
+                  "    pm.expect(json.currentState.state).to.eql(\"NEW\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Perez\",\n  \"email\": \"juan.perez@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/candidates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "candidates"]
+            },
+            "description": "Creación mínima: solo nombres y email."
+          }
+        },
+        {
+          "name": "Crear postulante (completo con todas las secciones)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Respuesta incluye perfil profesional\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.professionalProfile).to.not.be.null;",
+                  "    pm.expect(json.professionalProfile.headline).to.eql(\"Ingeniero de Software Senior\");",
+                  "});",
+                  "pm.test(\"Respuesta incluye estudios\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.educations).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "pm.test(\"Respuesta incluye hard skills\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.hardSkills).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "pm.test(\"Respuesta incluye soft skills\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.softSkills).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "pm.test(\"Estado inicial NEW\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.currentState.state).to.eql(\"NEW\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Maria\",\n  \"lastName\": \"Gonzalez\",\n  \"email\": \"maria.gonzalez@example.com\",\n  \"phone\": \"+56912345678\",\n  \"countryCode\": \"CL\",\n  \"identityDocument\": \"12345678-9\",\n  \"location\": \"Santiago, Chile\",\n  \"linkedinUrl\": \"https://linkedin.com/in/mariagonzalez\",\n  \"githubUrl\": \"https://github.com/mariagonzalez\",\n  \"professionalProfile\": {\n    \"headline\": \"Ingeniero de Software Senior\",\n    \"summary\": \"Ingeniero con 8+ anos de experiencia en desarrollo backend y liderazgo tecnico.\",\n    \"latestPosition\": \"Tech Lead\",\n    \"yearsExperience\": 8\n  },\n  \"educations\": [\n    {\n      \"educationLevelId\": 4,\n      \"degree\": \"Ingenieria Civil en Computacion\",\n      \"institution\": \"Universidad de Chile\",\n      \"startDate\": \"2010-03-01\",\n      \"endDate\": \"2015-12-31\"\n    }\n  ],\n  \"hardSkills\": [\n    {\n      \"hardSkillId\": 1,\n      \"level\": \"Avanzado\",\n      \"yearsExperience\": 8\n    },\n    {\n      \"hardSkillId\": 2,\n      \"level\": \"Avanzado\",\n      \"yearsExperience\": 6\n    }\n  ],\n  \"softSkills\": [\n    {\n      \"softSkillId\": 1\n    },\n    {\n      \"softSkillId\": 3\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/candidates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "candidates"]
+            },
+            "description": "Creación completa con todas las secciones opcionales."
+          }
+        },
+        {
+          "name": "Crear postulante (email duplicado - 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 409 Conflict\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "pm.test(\"Codigo EMAIL_ALREADY_EXISTS\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.code).to.eql(\"EMAIL_ALREADY_EXISTS\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Perez\",\n  \"email\": \"juan.perez@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/candidates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "candidates"]
+            },
+            "description": "Debe ejecutarse después de 'Crear postulante (solo datos basicos)'."
+          }
+        },
+        {
+          "name": "Crear postulante (hardSkill invalido - 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Codigo INVALID_CATALOG_REFERENCE\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.code).to.eql(\"INVALID_CATALOG_REFERENCE\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"Invalid\",\n  \"email\": \"test.invalid@example.com\",\n  \"hardSkills\": [\n    {\n      \"hardSkillId\": 9999,\n      \"level\": \"Avanzado\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/candidates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "candidates"]
+            },
+            "description": "hardSkillId 9999 no existe en el catálogo."
+          }
+        },
+        {
+          "name": "Crear postulante (campos obligatorios faltantes - 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Codigo VALIDATION_ERROR\", () => {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.code).to.eql(\"VALIDATION_ERROR\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/candidates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "candidates"]
+            },
+            "description": "Faltan lastName y email (obligatorios)."
+          }
+        },
+        {
+          "name": "Crear postulante (sin token - 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Perez\",\n  \"email\": \"juan.sin.token@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/candidates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "candidates"]
+            },
+            "description": "Sin Authorization header."
+          }
+        }
+      ],
+      "description": "Operaciones sobre postulantes."
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8084",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
