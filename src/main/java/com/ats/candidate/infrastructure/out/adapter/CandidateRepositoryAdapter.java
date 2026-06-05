@@ -35,4 +35,10 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
         );
     }
 
+    @Override
+    public java.util.Optional<Candidate> findById(Long id) {
+        return candidateJpaRepository.findById(id)
+                .map(candidatePersistenceMapper::toDomain);
+    }
+
 }

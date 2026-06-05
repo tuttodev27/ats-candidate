@@ -50,6 +50,21 @@ public record CandidateResponse(
         Long createdBy,
 
         @Schema(description = "Fecha y hora de creacion.", example = "2026-04-20T12:23:57.829836973")
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+
+        @Schema(description = "Perfil profesional del postulante.")
+        CandidateProfessionalProfileResponse professionalProfile,
+
+        @Schema(description = "Estudios del postulante.")
+        java.util.List<CandidateEducationResponse> educations,
+
+        @Schema(description = "Habilidades tecnicas del postulante.")
+        java.util.List<CandidateHardSkillResponse> hardSkills,
+
+        @Schema(description = "Habilidades blandas del postulante.")
+        java.util.List<CandidateSoftSkillResponse> softSkills,
+
+        @Schema(description = "Estado actual del postulante.")
+        CandidateStateResponse currentState
 ) {
 }

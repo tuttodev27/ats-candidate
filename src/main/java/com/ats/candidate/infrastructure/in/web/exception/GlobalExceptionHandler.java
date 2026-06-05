@@ -1,6 +1,7 @@
 package com.ats.candidate.infrastructure.in.web.exception;
 
 import com.ats.candidate.domain.exception.EmailAlreadyExistException;
+import com.ats.candidate.domain.exception.InvalidCatalogReferenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,19 @@ public class GlobalExceptionHandler {
                         Instant.now(),
                         HttpStatus.CONFLICT.value(),
                         "EMAIL_ALREADY_EXISTS",
+                        ex.getMessage(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    @ExceptionHandler(InvalidCatalogReferenceException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCatalog(InvalidCatalogReferenceException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        "INVALID_CATALOG_REFERENCE",
                         ex.getMessage(),
                         request.getRequestURI()
                 )

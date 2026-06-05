@@ -1,11 +1,13 @@
 package com.ats.candidate.infrastructure.in.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Schema(description = "Datos necesarios para crear un postulante.")
 public record CreateCandidateRequest(
@@ -54,6 +56,22 @@ public record CreateCandidateRequest(
 
         @Size(max = 300)
         @Schema(description = "URL del perfil de GitHub.", example = "https://github.com/juanperez")
-        String githubUrl
+        String githubUrl,
+
+        @Valid
+        @Schema(description = "Perfil profesional del postulante.")
+        CreateCandidateProfessionalProfileRequest professionalProfile,
+
+        @Valid
+        @Schema(description = "Estudios del postulante.")
+        List<@Valid CreateCandidateEducationRequest> educations,
+
+        @Valid
+        @Schema(description = "Habilidades tecnicas del postulante.")
+        List<@Valid CreateCandidateHardSkillRequest> hardSkills,
+
+        @Valid
+        @Schema(description = "Habilidades blandas del postulante.")
+        List<@Valid CreateCandidateSoftSkillRequest> softSkills
 ) {
 }
