@@ -1,5 +1,6 @@
 package com.ats.candidate.infrastructure.in.web.controller;
 
+import com.ats.candidate.domain.exception.CandidateNotFoundException;
 import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
@@ -116,6 +117,31 @@ class CandidateControllerTest {
                 new com.ats.candidate.infrastructure.in.web.dto.CandidateStatusResponse("IN_REVIEW", "En revisión")
         );
         verify(candidateUseCase).getStatuses();
+    }
+
+    @Test
+    void getByIdReturns200WithFullCandidateData() {
+        Long candidateId = 1L;
+        Candidate candidate = Candidate.builder().id(candidateId).build();
+        CandidateResponse response = candidateResponse(candidateId);
+        when(candidateUseCase.getById(candidateId)).thenReturn(candidate);
+        when(candidateWebMapper.toResponse(candidate)).thenReturn(response);
+
+        var result = controller.getById(candidateId);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isEqualTo(response);
+        verify(candidateUseCase).getById(candidateId);
+    }
+
+    @Test
+    void getByIdThrows404WhenCandidateNotFound() {
+        Long candidateId = 999L;
+        when(candidateUseCase.getById(candidateId)).thenThrow(new CandidateNotFoundException(candidateId));
+
+        assertThatThrownBy(() -> controller.getById(candidateId))
+                .isInstanceOf(CandidateNotFoundException.class)
+                .hasMessageContaining("Candidate with id " + candidateId + " not found");
     }
 
     private CreateCandidateRequest createCandidateRequest() {
