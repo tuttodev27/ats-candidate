@@ -3,8 +3,6 @@ package com.ats.candidate.domain.model;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -18,6 +16,6 @@ public class CandidateState {
     Long id;
     Long candidateId;
     String state;
-    LocalDateTime createdAt;
+    java.time.LocalDateTime createdAt;
     Long createdBy;
 }

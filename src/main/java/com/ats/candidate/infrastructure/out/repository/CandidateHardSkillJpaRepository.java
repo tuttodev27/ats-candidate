@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface CandidateHardSkillJpaRepository extends JpaRepository<CandidateHardSkillEntity, Long> {
     List<CandidateHardSkillEntity> findByCandidateId(Long candidateId);
-    void deleteByCandidateId(Long candidateId);
+    void deleteAllByCandidateId(Long candidateId);
 }
+

@@ -1,18 +1,24 @@
 package com.ats.candidate.infrastructure.in.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
 
 @Schema(description = "Habilidad tecnica del postulante.")
 public record CreateCandidateHardSkillRequest(
         @NotNull
-        @Schema(description = "Identificador de la habilidad tecnica.", example = "1")
         Long hardSkillId,
 
-        @Schema(description = "Nivel de dominio.", example = "Avanzado")
+        @Size(max = 80)
         String level,
 
-        @Schema(description = "Anios de experiencia.", example = "5")
-        Integer yearsExperience
+        @Min(0)
+        Integer yearsExperience,
+        String source,
+        BigDecimal confidence
 ) {
 }
+

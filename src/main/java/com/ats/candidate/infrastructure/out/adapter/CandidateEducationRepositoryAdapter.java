@@ -6,37 +6,45 @@ import com.ats.candidate.infrastructure.out.mapper.CandidateEducationPersistence
 import com.ats.candidate.infrastructure.out.repository.CandidateEducationJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public class CandidateEducationRepositoryAdapter implements CandidateEducationRepositoryPort {
 
-    private final CandidateEducationJpaRepository jpaRepository;
-    private final CandidateEducationPersistenceMapper mapper;
+    private final CandidateEducationJpaRepository educationJpaRepository;
+    private final CandidateEducationPersistenceMapper educationPersistenceMapper;
 
     public CandidateEducationRepositoryAdapter(
-            CandidateEducationJpaRepository jpaRepository,
-            CandidateEducationPersistenceMapper mapper) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
+            CandidateEducationJpaRepository educationJpaRepository,
+            CandidateEducationPersistenceMapper educationPersistenceMapper
+    ) {
+        this.educationJpaRepository = educationJpaRepository;
+        this.educationPersistenceMapper = educationPersistenceMapper;
+    }
+
+    @Override
+    public Set<CandidateEducation> saveAll(Set<CandidateEducation> educations) {
+        return new HashSet<>(educationJpaRepository.saveAll(educations.stream()
+                .map(educationPersistenceMapper::toEntity)
+                .toList())
+                .stream()
+                .map(educationPersistenceMapper::toDomain)
+                .toList());
     }
 
     @Override
     public List<CandidateEducation> findByCandidateId(Long candidateId) {
-        return jpaRepository.findByCandidateId(candidateId).stream()
-                .map(mapper::toDomain)
+        return educationJpaRepository.findByCandidateId(candidateId)
+                .stream()
+                .map(educationPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
-    public CandidateEducation save(CandidateEducation education) {
-        var entity = mapper.toEntity(education);
-        var saved = jpaRepository.save(entity);
-        return mapper.toDomain(saved);
-    }
-
-    @Override
-    public void deleteByCandidateId(Long candidateId) {
-        jpaRepository.deleteByCandidateId(candidateId);
+    public void deleteAllByCandidateId(Long candidateId) {
+        educationJpaRepository.deleteAllByCandidateId(candidateId);
     }
 }
+

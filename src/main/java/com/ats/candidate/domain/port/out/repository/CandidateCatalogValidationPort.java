@@ -1,16 +1,17 @@
 package com.ats.candidate.domain.port.out.repository;
 
-import java.util.Set;
+import java.util.List;
 
 public interface CandidateCatalogValidationPort {
-
-    boolean existsHardSkill(Long hardSkillId);
-
-    Set<Long> findExistingHardSkillIds(Set<Long> ids);
-
-    boolean existsSoftSkill(Long softSkillId);
-
-    Set<Long> findExistingSoftSkillIds(Set<Long> ids);
-
-    boolean existsEducationLevel(Long educationLevelId);
+    boolean existsActiveCountryCode(String isoCode);
+    boolean existsActiveExperienceRange(Long id);
+    boolean existsActiveEducationLevel(Long id);
+    boolean existsActiveLanguage(Long id);
+    boolean existsActiveLanguageLevel(Long id);
+    boolean existsActiveHardSkill(Long id);
+    boolean existsActiveSoftSkill(Long id);
+    List<String> getActiveHardSkillNames();
+    List<String> getActiveSoftSkillNames();
+    java.util.Optional<Long> findHardSkillIdByName(String name);
+    java.util.Optional<Long> findSoftSkillIdByName(String name);
 }

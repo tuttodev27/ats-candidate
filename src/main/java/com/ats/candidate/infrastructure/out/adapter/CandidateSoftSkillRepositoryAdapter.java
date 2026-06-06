@@ -6,37 +6,45 @@ import com.ats.candidate.infrastructure.out.mapper.CandidateSoftSkillPersistence
 import com.ats.candidate.infrastructure.out.repository.CandidateSoftSkillJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public class CandidateSoftSkillRepositoryAdapter implements CandidateSoftSkillRepositoryPort {
 
-    private final CandidateSoftSkillJpaRepository jpaRepository;
-    private final CandidateSoftSkillPersistenceMapper mapper;
+    private final CandidateSoftSkillJpaRepository softSkillJpaRepository;
+    private final CandidateSoftSkillPersistenceMapper softSkillPersistenceMapper;
 
     public CandidateSoftSkillRepositoryAdapter(
-            CandidateSoftSkillJpaRepository jpaRepository,
-            CandidateSoftSkillPersistenceMapper mapper) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
+            CandidateSoftSkillJpaRepository softSkillJpaRepository,
+            CandidateSoftSkillPersistenceMapper softSkillPersistenceMapper
+    ) {
+        this.softSkillJpaRepository = softSkillJpaRepository;
+        this.softSkillPersistenceMapper = softSkillPersistenceMapper;
+    }
+
+    @Override
+    public Set<CandidateSoftSkill> saveAll(Set<CandidateSoftSkill> softSkills) {
+        return new HashSet<>(softSkillJpaRepository.saveAll(softSkills.stream()
+                .map(softSkillPersistenceMapper::toEntity)
+                .toList())
+                .stream()
+                .map(softSkillPersistenceMapper::toDomain)
+                .toList());
     }
 
     @Override
     public List<CandidateSoftSkill> findByCandidateId(Long candidateId) {
-        return jpaRepository.findByCandidateId(candidateId).stream()
-                .map(mapper::toDomain)
+        return softSkillJpaRepository.findByCandidateId(candidateId)
+                .stream()
+                .map(softSkillPersistenceMapper::toDomain)
                 .toList();
     }
 
     @Override
-    public CandidateSoftSkill save(CandidateSoftSkill softSkill) {
-        var entity = mapper.toEntity(softSkill);
-        var saved = jpaRepository.save(entity);
-        return mapper.toDomain(saved);
-    }
-
-    @Override
-    public void deleteByCandidateId(Long candidateId) {
-        jpaRepository.deleteByCandidateId(candidateId);
+    public void deleteAllByCandidateId(Long candidateId) {
+        softSkillJpaRepository.deleteAllByCandidateId(candidateId);
     }
 }
+

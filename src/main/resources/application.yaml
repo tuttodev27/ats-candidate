@@ -24,4 +24,4 @@ spring:
 
 security:
   jwt:
-    secret: local-development-secret-key-change-me-ats-candidate
+    secret: ats-users-dev-secret-change-in-prod-2026

@@ -5,7 +5,6 @@ import com.ats.candidate.domain.model.CandidateProfessionalProfile;
 import java.util.Optional;
 
 public interface CandidateProfessionalProfileRepositoryPort {
-    CandidateProfessionalProfile save(CandidateProfessionalProfile profile);
+    CandidateProfessionalProfile save(CandidateProfessionalProfile professionalProfile);
     Optional<CandidateProfessionalProfile> findByCandidateId(Long candidateId);
-    void deleteByCandidateId(Long candidateId);
 }

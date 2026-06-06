@@ -6,32 +6,34 @@ import com.ats.candidate.infrastructure.out.mapper.CandidateStatePersistenceMapp
 import com.ats.candidate.infrastructure.out.repository.CandidateStateJpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CandidateStateRepositoryAdapter implements CandidateStateRepositoryPort {
 
-    private final CandidateStateJpaRepository jpaRepository;
-    private final CandidateStatePersistenceMapper mapper;
+    private final CandidateStateJpaRepository candidateStateJpaRepository;
+    private final CandidateStatePersistenceMapper candidateStatePersistenceMapper;
 
     public CandidateStateRepositoryAdapter(
-            CandidateStateJpaRepository jpaRepository,
-            CandidateStatePersistenceMapper mapper) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
+            CandidateStateJpaRepository candidateStateJpaRepository,
+            CandidateStatePersistenceMapper candidateStatePersistenceMapper
+    ) {
+        this.candidateStateJpaRepository = candidateStateJpaRepository;
+        this.candidateStatePersistenceMapper = candidateStatePersistenceMapper;
     }
 
     @Override
-    public CandidateState save(CandidateState state) {
-        var entity = mapper.toEntity(state);
-        var saved = jpaRepository.save(entity);
-        return mapper.toDomain(saved);
+    public CandidateState save(CandidateState candidateState) {
+        return candidateStatePersistenceMapper.toDomain(
+                candidateStateJpaRepository.save(candidateStatePersistenceMapper.toEntity(candidateState))
+        );
     }
 
     @Override
-    public List<CandidateState> findByCandidateIdOrderByCreatedAtDesc(Long candidateId) {
-        return jpaRepository.findByCandidateIdOrderByCreatedAtDesc(candidateId).stream()
-                .map(mapper::toDomain)
-                .toList();
+    public Optional<CandidateState> findLatestByCandidateId(Long candidateId) {
+        return candidateStateJpaRepository
+                .findTopByCandidateIdOrderByCreatedAtDesc(candidateId)
+                .map(candidateStatePersistenceMapper::toDomain);
     }
 }
+

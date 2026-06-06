@@ -11,31 +11,27 @@ import java.util.Optional;
 @Repository
 public class CandidateProfessionalProfileRepositoryAdapter implements CandidateProfessionalProfileRepositoryPort {
 
-    private final CandidateProfessionalProfileJpaRepository jpaRepository;
-    private final CandidateProfessionalProfilePersistenceMapper mapper;
+    private final CandidateProfessionalProfileJpaRepository professionalProfileJpaRepository;
+    private final CandidateProfessionalProfilePersistenceMapper professionalProfilePersistenceMapper;
 
     public CandidateProfessionalProfileRepositoryAdapter(
-            CandidateProfessionalProfileJpaRepository jpaRepository,
-            CandidateProfessionalProfilePersistenceMapper mapper) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
+            CandidateProfessionalProfileJpaRepository professionalProfileJpaRepository,
+            CandidateProfessionalProfilePersistenceMapper professionalProfilePersistenceMapper
+    ) {
+        this.professionalProfileJpaRepository = professionalProfileJpaRepository;
+        this.professionalProfilePersistenceMapper = professionalProfilePersistenceMapper;
     }
 
     @Override
-    public CandidateProfessionalProfile save(CandidateProfessionalProfile profile) {
-        var entity = mapper.toEntity(profile);
-        var saved = jpaRepository.save(entity);
-        return mapper.toDomain(saved);
+    public CandidateProfessionalProfile save(CandidateProfessionalProfile professionalProfile) {
+        return professionalProfilePersistenceMapper.toDomain(
+                professionalProfileJpaRepository.save(professionalProfilePersistenceMapper.toEntity(professionalProfile))
+        );
     }
 
     @Override
     public Optional<CandidateProfessionalProfile> findByCandidateId(Long candidateId) {
-        return jpaRepository.findByCandidateId(candidateId)
-                .map(mapper::toDomain);
-    }
-
-    @Override
-    public void deleteByCandidateId(Long candidateId) {
-        jpaRepository.deleteByCandidateId(candidateId);
+        return professionalProfileJpaRepository.findByCandidateId(candidateId)
+                .map(professionalProfilePersistenceMapper::toDomain);
     }
 }

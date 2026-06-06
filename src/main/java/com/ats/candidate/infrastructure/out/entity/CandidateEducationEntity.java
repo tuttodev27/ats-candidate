@@ -7,10 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
@@ -19,14 +16,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "candidate_education")
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CandidateEducationEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
@@ -38,7 +31,6 @@ public class CandidateEducationEntity {
     Long educationLevelId;
 
     String degree;
-
     String institution;
 
     @Column(name = "start_date")
@@ -47,7 +39,7 @@ public class CandidateEducationEntity {
     @Column(name = "end_date")
     LocalDate endDate;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at")
     LocalDateTime createdAt;
 
     @Column(name = "updated_at")

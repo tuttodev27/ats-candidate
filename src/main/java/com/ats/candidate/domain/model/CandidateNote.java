@@ -14,4 +14,9 @@ import lombok.experimental.FieldDefaults;
 public class CandidateNote {
     @EqualsAndHashCode.Include
     Long id;
+
+    Integer candidateId;
+    String note;
+    String createdBy;
+    String createdAt;
 }

@@ -1,19 +1,24 @@
 package com.ats.candidate.infrastructure.in.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "Perfil profesional del postulante.")
 public record CreateCandidateProfessionalProfileRequest(
-        @Schema(description = "Titulo o headline profesional.", example = "Ingeniero de Software Senior")
+        @Size(max = 180)
         String headline,
 
-        @Schema(description = "Resumen profesional.", example = "Ingeniero con 8+ anos de experiencia...")
+        @Size(max = 4000)
         String summary,
 
-        @Schema(description = "Ultimo cargo ocupado.", example = "Tech Lead")
+        @Size(max = 180)
         String latestPosition,
 
-        @Schema(description = "Anios de experiencia.", example = "8")
+        Long experienceRangeId,
+
+        @Min(0)
         Integer yearsExperience
 ) {
 }
+

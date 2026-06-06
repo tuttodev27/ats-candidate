@@ -4,7 +4,13 @@ import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.port.out.repository.CandidateRepositoryPort;
 import com.ats.candidate.infrastructure.out.mapper.CandidatePersistenceMapper;
 import com.ats.candidate.infrastructure.out.repository.CandidateJpaRepository;
+import com.ats.candidate.infrastructure.out.entity.CandidateEntity;
+import org.springframework.data.domain.Page;
+
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 @Repository
 public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
@@ -29,6 +35,11 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return id != null && candidateJpaRepository.existsById(id);
+    }
+
+    @Override
     public Candidate save(Candidate candidate) {
         return candidatePersistenceMapper.toDomain(
                 candidateJpaRepository.save(candidatePersistenceMapper.toEntity(candidate))
@@ -36,9 +47,44 @@ public class CandidateRepositoryAdapter implements CandidateRepositoryPort {
     }
 
     @Override
-    public java.util.Optional<Candidate> findById(Long id) {
+    public Page<Candidate> findAll(Boolean active, String search, Pageable pageable) {
+        return candidateJpaRepository.findByActiveAndSearch(active, search, pageable)
+                .map(candidatePersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Candidate> findById(Long id) {
         return candidateJpaRepository.findById(id)
                 .map(candidatePersistenceMapper::toDomain);
     }
 
+    @Override
+    public Candidate update(Candidate candidate) {
+        CandidateEntity existing = candidateJpaRepository.findById(candidate.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Candidate not found with id: " + candidate.getId()));
+
+        existing.setPhone(candidate.getPhone());
+        existing.setCountryCode(candidate.getCountryCode());
+        existing.setIdentityDocument(candidate.getIdentityDocument());
+        existing.setLocation(candidate.getLocation());
+        existing.setLinkedinUrl(candidate.getLinkedinUrl());
+        existing.setGithubUrl(candidate.getGithubUrl());
+        existing.setBirthDate(candidate.getBirthDate());
+        existing.setUpdatedAt(candidate.getUpdatedAt());
+        existing.setUpdatedBy(candidate.getUpdatedBy());
+
+        return candidatePersistenceMapper.toDomain(candidateJpaRepository.save(existing));
+    }
+
+    @Override
+    public void deactivate(Long id, Long recruiterId) {
+        CandidateEntity existing = candidateJpaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Candidate not found with id: " + id));
+        existing.setActive(false);
+        existing.setUpdatedAt(java.time.LocalDateTime.now());
+        existing.setUpdatedBy(recruiterId);
+        candidateJpaRepository.save(existing);
+    }
+
 }
+

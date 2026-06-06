@@ -7,5 +7,4 @@ import java.util.Optional;
 
 public interface CandidateProfessionalProfileJpaRepository extends JpaRepository<CandidateProfessionalProfileEntity, Long> {
     Optional<CandidateProfessionalProfileEntity> findByCandidateId(Long candidateId);
-    void deleteByCandidateId(Long candidateId);
 }
