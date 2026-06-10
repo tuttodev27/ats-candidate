@@ -17,6 +17,9 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -31,27 +34,42 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/candidates", "/api/candidates/*")
-                        .hasAuthority("RECRUITER_READ")
+                        .hasAnyAuthority("RECRUITER_READ", "CANDIDATE_READ")
                         .requestMatchers(HttpMethod.GET, "/api/candidates/*/attachments")
-                        .hasAuthority("RECRUITER_READ")
+                        .hasAnyAuthority("RECRUITER_READ", "CANDIDATE_READ")
                         .requestMatchers(HttpMethod.POST, "/api/candidates", "/api/candidates/*/attachments")
-                        .hasAuthority("RECRUITER_WRITE")
+                        .hasAnyAuthority("RECRUITER_WRITE", "CANDIDATE_CREATE")
                         .requestMatchers(HttpMethod.PUT, "/api/candidates/*")
-                        .hasAuthority("RECRUITER_WRITE")
+                        .hasAnyAuthority("RECRUITER_WRITE", "CANDIDATE_UPDATE")
                         .requestMatchers(HttpMethod.PATCH, "/api/candidates/*/status")
-                        .hasAuthority("RECRUITER_WRITE")
+                        .hasAnyAuthority("RECRUITER_WRITE", "CANDIDATE_UPDATE")
                         .requestMatchers(HttpMethod.DELETE, "/api/candidates/*")
-                        .hasAuthority("RECRUITER_WRITE")
+                        .hasAnyAuthority("RECRUITER_WRITE", "CANDIDATE_DELETE")
                         .anyRequest()
                         .permitAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
