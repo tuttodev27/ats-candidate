@@ -4,18 +4,21 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-@Schema(description = "Estado del postulante en el proceso de seleccion.")
+@Schema(description = "Cambio de estado del postulante.")
 public record CandidateStateResponse(
-        @Schema(description = "Identificador del estado.", example = "1")
+        @Schema(description = "Identificador del cambio de estado.", example = "1")
         Long id,
 
-        @Schema(description = "Estado del postulante.", example = "NEW")
-        String state,
+        @Schema(description = "Estado anterior del postulante.", example = "IN_REVIEW")
+        String previousState,
 
-        @Schema(description = "Fecha y hora de creacion.", example = "2026-04-20T12:23:57.829836973")
-        LocalDateTime createdAt,
+        @Schema(description = "Nuevo estado del postulante.", example = "INTERVIEW")
+        String newState,
 
-        @Schema(description = "Identificador del reclutador que creo el estado.", example = "1")
-        Long createdBy
+        @Schema(description = "Identificador del reclutador que realizo el cambio.", example = "1")
+        Long changedBy,
+
+        @Schema(description = "Fecha y hora del cambio.", example = "2026-04-20T12:23:57.829836973")
+        LocalDateTime changedAt
 ) {
 }
