@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Arrays;
@@ -48,6 +49,15 @@ public class CandidateService implements CandidateUseCase {
     private static final Set<String> ALLOWED_STATES = Arrays.stream(CandidateStatus.values())
             .map(CandidateStatus::name)
             .collect(Collectors.toSet());
+
+    private static final Map<CandidateStatus, Set<CandidateStatus>> ALLOWED_TRANSITIONS = Map.of(
+            CandidateStatus.NEW, Set.of(CandidateStatus.IN_REVIEW, CandidateStatus.INTERVIEW, CandidateStatus.SHORTLIST, CandidateStatus.REJECTED, CandidateStatus.HIRED),
+            CandidateStatus.IN_REVIEW, Set.of(CandidateStatus.INTERVIEW, CandidateStatus.SHORTLIST, CandidateStatus.REJECTED, CandidateStatus.HIRED),
+            CandidateStatus.INTERVIEW, Set.of(CandidateStatus.SHORTLIST, CandidateStatus.REJECTED, CandidateStatus.HIRED),
+            CandidateStatus.SHORTLIST, Set.of(CandidateStatus.REJECTED, CandidateStatus.HIRED),
+            CandidateStatus.REJECTED, Set.of(),
+            CandidateStatus.HIRED, Set.of()
+    );
 
     private final CandidateRepositoryPort candidateRepositoryPort;
     private final CandidateCatalogValidationPort catalogValidationPort;
@@ -373,6 +383,18 @@ public class CandidateService implements CandidateUseCase {
 
         if (status == null || !ALLOWED_STATES.contains(status)) {
             throw new InvalidCandidateStateException("Invalid candidate status: " + status);
+        }
+
+        CandidateStatus newStatus = CandidateStatus.valueOf(status);
+
+        CandidateState currentState = candidateStateRepositoryPort.findLatestByCandidateId(id).orElse(null);
+        if (currentState != null) {
+            CandidateStatus current = CandidateStatus.valueOf(currentState.getState());
+            if (!ALLOWED_TRANSITIONS.getOrDefault(current, Set.of()).contains(newStatus)) {
+                throw new InvalidCandidateStateException(
+                        "Invalid transition from " + current + " to " + newStatus
+                );
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();

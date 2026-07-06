@@ -20,13 +20,17 @@
 
 ---
 
-## 3. Validación de secuencia de estados del candidato
+## 3. Validación de secuencia de estados del candidato ✅ *RESUELTO*
 
 **Problema:** La HU indica la transición `NEW → IN_REVIEW → INTERVIEW → SHORTLIST → REJECTED / HIRED` (AC15), pero no especifica si los saltos están permitidos (ej: `NEW → SHORTLIST` directo). El código actual no valida la secuencia, permitiendo cualquier transición.
 
-**Solución:** Implementar una máquina de estados que valide las transiciones permitidas y rechace saltos inválidos con 400 Bad Request.
+**Solución:** Se implementó una máquina de estados vía `ALLOWED_TRANSITIONS` en `CandidateService` que:
+- Permite avanzar hacia adelante en la secuencia.
+- Permite saltar estados intermedios (ej: `NEW → INTERVIEW`).
+- Marca `REJECTED` y `HIRED` como estados terminales (sin transiciones salientes).
+- Rechaza transiciones hacia atrás con `InvalidCandidateStateException` → 400 Bad Request.
 
-**Archivos:** `domain/model/CandidateStatus.java` (enum), `application/service/CandidateService.java`
+**Archivos:** `application/service/CandidateService.java`
 
 ---
 

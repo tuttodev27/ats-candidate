@@ -3,6 +3,7 @@ package com.ats.candidate.application.service;
 import com.ats.candidate.domain.exception.EmailAlreadyExistException;
 import com.ats.candidate.domain.exception.InvalidCatalogReferenceException;
 import com.ats.candidate.domain.exception.CandidateNotFoundException;
+import com.ats.candidate.domain.exception.InvalidCandidateStateException;
 import com.ats.candidate.domain.model.Attachment;
 import com.ats.candidate.domain.model.Candidate;
 import com.ats.candidate.domain.model.CandidateEducation;
@@ -508,23 +509,24 @@ class CandidateServiceTest {
     }
 
     @Test
-    void updateStatusSuccessfullyPersistsNewState() {
+    void updateStatusSuccessfullyTransitionsFromNewToInReview() {
         Long candidateId = 100L;
+        String currentStatus = "NEW";
         String newStatus = "IN_REVIEW";
         Long recruiterId = 42L;
 
+        CandidateState currentState = CandidateState.builder().id(10L).candidateId(candidateId).state(currentStatus).build();
+        CandidateState savedState = CandidateState.builder().id(11L).candidateId(candidateId).state(newStatus).build();
+
         Candidate candidate = Candidate.builder().id(candidateId).email("juan@example.com").build();
-        CandidateState state = CandidateState.builder().id(10L).candidateId(candidateId).state(newStatus).build();
 
         when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
         when(candidateRepositoryPort.findById(candidateId)).thenReturn(Optional.of(candidate));
-        when(candidateStateRepositoryPort.findLatestByCandidateId(candidateId)).thenReturn(Optional.of(state));
+        when(candidateStateRepositoryPort.findLatestByCandidateId(candidateId))
+                .thenReturn(Optional.of(currentState))
+                .thenReturn(Optional.of(savedState));
 
-        Candidate result = candidateService.updateStatus(candidateId, newStatus, recruiterId);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getStates()).isNotEmpty();
-        assertThat(result.getStates().iterator().next().getState()).isEqualTo(newStatus);
+        candidateService.updateStatus(candidateId, newStatus, recruiterId);
 
         ArgumentCaptor<CandidateState> stateCaptor = ArgumentCaptor.forClass(CandidateState.class);
         verify(candidateStateRepositoryPort).save(stateCaptor.capture());
@@ -553,6 +555,56 @@ class CandidateServiceTest {
         assertThatThrownBy(() -> candidateService.updateStatus(candidateId, "INVALID_STATE_VALUE", 42L))
                 .isInstanceOf(com.ats.candidate.domain.exception.InvalidCandidateStateException.class)
                 .hasMessageContaining("Invalid candidate status: INVALID_STATE_VALUE");
+
+        verify(candidateStateRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    void updateStatusThrowsExceptionWhenTransitionIsInvalid() {
+        Long candidateId = 100L;
+        Long recruiterId = 42L;
+
+        CandidateState currentState = CandidateState.builder().id(10L).candidateId(candidateId).state("IN_REVIEW").build();
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(candidateStateRepositoryPort.findLatestByCandidateId(candidateId)).thenReturn(Optional.of(currentState));
+
+        assertThatThrownBy(() -> candidateService.updateStatus(candidateId, "NEW", recruiterId))
+                .isInstanceOf(InvalidCandidateStateException.class)
+                .hasMessageContaining("Invalid transition from IN_REVIEW to NEW");
+
+        verify(candidateStateRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    void updateStatusThrowsExceptionWhenTransitionFromTerminalState() {
+        Long candidateId = 100L;
+        Long recruiterId = 42L;
+
+        CandidateState currentState = CandidateState.builder().id(10L).candidateId(candidateId).state("HIRED").build();
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(candidateStateRepositoryPort.findLatestByCandidateId(candidateId)).thenReturn(Optional.of(currentState));
+
+        assertThatThrownBy(() -> candidateService.updateStatus(candidateId, "IN_REVIEW", recruiterId))
+                .isInstanceOf(InvalidCandidateStateException.class)
+                .hasMessageContaining("Invalid transition from HIRED to IN_REVIEW");
+
+        verify(candidateStateRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    void updateStatusThrowsExceptionWhenTransitionFromRejected() {
+        Long candidateId = 100L;
+        Long recruiterId = 42L;
+
+        CandidateState currentState = CandidateState.builder().id(10L).candidateId(candidateId).state("REJECTED").build();
+
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(candidateStateRepositoryPort.findLatestByCandidateId(candidateId)).thenReturn(Optional.of(currentState));
+
+        assertThatThrownBy(() -> candidateService.updateStatus(candidateId, "NEW", recruiterId))
+                .isInstanceOf(InvalidCandidateStateException.class);
 
         verify(candidateStateRepositoryPort, never()).save(any());
     }
