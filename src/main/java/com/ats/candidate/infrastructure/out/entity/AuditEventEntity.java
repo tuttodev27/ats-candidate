@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,7 +34,7 @@ public class AuditEventEntity {
     @Column(name = "entity_id")
     Long entityId;
 
-    @Lob
+    @Column(columnDefinition = "text")
     String detail;
 
     @Column(name = "created_at")
