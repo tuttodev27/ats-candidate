@@ -77,7 +77,7 @@ public class SecurityConfig {
         SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         return NimbusJwtDecoder
                 .withSecretKey(secretKey)
-                .macAlgorithm(MacAlgorithm.HS384)
+                .macAlgorithm(MacAlgorithm.HS256)
                 .build();
     }
 
