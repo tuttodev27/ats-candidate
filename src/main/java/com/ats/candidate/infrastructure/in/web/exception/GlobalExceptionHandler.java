@@ -128,7 +128,7 @@ public class GlobalExceptionHandler {
                         Instant.now(),
                         HttpStatus.CONFLICT.value(),
                         "EMAIL_ALREADY_EXISTS",
-                        "Candidate already exists with this email",
+                        ex.getMessage(),
                         request.getRequestURI()
                 )
         );

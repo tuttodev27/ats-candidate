@@ -6,7 +6,9 @@ import com.ats.candidate.infrastructure.out.mapper.CandidateStatePersistenceMapp
 import com.ats.candidate.infrastructure.out.repository.CandidateStateJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class CandidateStateRepositoryAdapter implements CandidateStateRepositoryPort {
@@ -34,6 +36,15 @@ public class CandidateStateRepositoryAdapter implements CandidateStateRepository
         return candidateStateJpaRepository
                 .findTopByCandidateIdOrderByCreatedAtDesc(candidateId)
                 .map(candidateStatePersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<CandidateState> findAllByCandidateId(Long candidateId) {
+        return candidateStateJpaRepository
+                .findByCandidateIdOrderByCreatedAtAsc(candidateId)
+                .stream()
+                .map(candidateStatePersistenceMapper::toDomain)
+                .collect(Collectors.toList());
     }
 }
 
