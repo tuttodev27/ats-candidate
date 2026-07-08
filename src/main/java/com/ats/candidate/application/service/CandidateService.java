@@ -164,6 +164,8 @@ public class CandidateService implements CandidateUseCase {
     private void saveDetails(Candidate candidate, Long candidateId) {
         if (candidate.getProfessionalProfile() != null) {
             candidate.getProfessionalProfile().setCandidateId(candidateId);
+            professionalProfileRepositoryPort.findByCandidateId(candidateId)
+                    .ifPresent(existing -> candidate.getProfessionalProfile().setId(existing.getId()));
             professionalProfileRepositoryPort.save(candidate.getProfessionalProfile());
         }
         if (candidate.getEducations() != null && !candidate.getEducations().isEmpty()) {
@@ -420,6 +422,15 @@ public class CandidateService implements CandidateUseCase {
     @Override
     public List<CandidateStatus> getStatuses() {
         return Arrays.asList(CandidateStatus.values());
+    }
+
+    @Override
+    @Transactional
+    public List<CandidateState> getStatusHistory(Long id) {
+        if (!candidateRepositoryPort.existsById(id)) {
+            throw new CandidateNotFoundException(id);
+        }
+        return candidateStateRepositoryPort.findAllByCandidateId(id);
     }
 }
 

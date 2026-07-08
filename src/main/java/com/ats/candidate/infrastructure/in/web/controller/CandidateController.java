@@ -1,15 +1,18 @@
 package com.ats.candidate.infrastructure.in.web.controller;
 
 import com.ats.candidate.domain.model.Candidate;
+import com.ats.candidate.domain.model.CandidateState;
 import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.CandidateResponse;
+import com.ats.candidate.infrastructure.in.web.dto.CandidateStateResponse;
 import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateStatusRequest;
 import com.ats.candidate.infrastructure.in.web.dto.CandidateStatusResponse;
 import com.ats.candidate.infrastructure.in.web.exception.ErrorResponse;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
+import java.util.ArrayList;
 import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -100,6 +103,29 @@ public class CandidateController {
                 return ResponseEntity.ok(candidateWebMapper.toResponse(candidate));
         }
 
+        @GetMapping("/{id}/status-history")
+        @Operation(summary = "Consultar historial de estados", description = "Devuelve el historial de cambios de estado de un postulante. Requiere JWT con permiso RECRUITER_READ.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Historial de estados."),
+                        @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
+                        @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso RECRUITER_READ."),
+                        @ApiResponse(responseCode = "404", description = "Postulante no encontrado.")
+        })
+        public ResponseEntity<List<CandidateStateResponse>> getStatusHistory(@PathVariable Long id) {
+                List<CandidateState> states = candidateUseCase.getStatusHistory(id);
+                List<CandidateStateResponse> response = new ArrayList<>();
+                String previousState = null;
+                for (CandidateState state : states) {
+                        response.add(new CandidateStateResponse(
+                                state.getId(),
+                                previousState,
+                                state.getState(),
+                                state.getCreatedBy(),
+                                state.getCreatedAt()
+                        ));
+                        previousState = state.getState();
+                }
+                return ResponseEntity.ok(response);
+        }
 
         @PostMapping
         @Operation(summary = "Crear postulante", description = "Crea un postulante activo. El correo electronico debe ser unico.", parameters = {
