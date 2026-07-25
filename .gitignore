@@ -1,5 +1,62 @@
+# =========================
+# IDEs / Editors
+# =========================
 .idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.code-workspace
+
+# =========================
+# Gradle / Build
+# =========================
 .gradle/
 .gradle-local/
-bin/
 build/
+bin/
+out/
+
+# =========================
+# Spring Boot / Logs
+# =========================
+*.log
+logs/
+application-local.yaml
+application-local.yml
+application-*.env
+
+# =========================
+# Variables de entorno
+# =========================
+.env
+.env.local
+.env.*.local
+
+# =========================
+# Archivos sensibles (certificados, llaves)
+# =========================
+*.jks
+*.p12
+*.pem
+*.key
+*.cert
+
+# =========================
+# Sistema operativo
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# =========================
+# Maven (si aplica)
+# =========================
+target/
+
+# =========================
+# Docker (volumenes locales)
+# =========================
+docker/data/
