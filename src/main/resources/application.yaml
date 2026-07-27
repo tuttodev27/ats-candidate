@@ -29,3 +29,9 @@ eureka:
 security:
   jwt:
     secret: ${JWT_SECRET:mi-secret-local-superseguro-worksync-2026-ats-usuarios}
+
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+  model: ${OLLAMA_MODEL:llama3}
+  timeout-seconds: ${OLLAMA_TIMEOUT:60}
+  max-text-length: ${OLLAMA_MAX_TEXT:12000}
