@@ -25,3 +25,9 @@ spring:
 security:
   jwt:
     secret: ats-users-dev-secret-change-in-prod-2026
+
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+  model: ${OLLAMA_MODEL:llama3}
+  timeout-seconds: ${OLLAMA_TIMEOUT:60}
+  max-text-length: ${OLLAMA_MAX_TEXT:12000}

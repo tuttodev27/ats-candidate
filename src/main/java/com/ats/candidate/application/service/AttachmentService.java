@@ -1,5 +1,6 @@
 package com.ats.candidate.application.service;
 
+import com.ats.candidate.application.parser.AiCvParser;
 import com.ats.candidate.application.parser.CvParser;
 import com.ats.candidate.domain.exception.CandidateNotFoundException;
 import com.ats.candidate.domain.exception.InvalidAttachmentException;
@@ -11,6 +12,8 @@ import com.ats.candidate.domain.port.out.storage.AttachmentStoragePort;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,8 @@ import java.util.*;
 
 @Service
 public class AttachmentService implements AttachmentUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(AttachmentService.class);
 
     private static final String PDF_CONTENT_TYPE = "application/pdf";
     private static final String PARSE_STATUS_PENDING = "PENDING";
@@ -37,6 +42,7 @@ public class AttachmentService implements AttachmentUseCase {
     private final CandidateEducationRepositoryPort educationRepositoryPort;
     private final CandidateHardSkillRepositoryPort hardSkillRepositoryPort;
     private final CandidateSoftSkillRepositoryPort softSkillRepositoryPort;
+    private final AiCvParser aiCvParser;
 
     public AttachmentService(
             CandidateRepositoryPort candidateRepositoryPort,
@@ -48,7 +54,8 @@ public class AttachmentService implements AttachmentUseCase {
             CandidateProfessionalProfileRepositoryPort professionalProfileRepositoryPort,
             CandidateEducationRepositoryPort educationRepositoryPort,
             CandidateHardSkillRepositoryPort hardSkillRepositoryPort,
-            CandidateSoftSkillRepositoryPort softSkillRepositoryPort
+            CandidateSoftSkillRepositoryPort softSkillRepositoryPort,
+            AiCvParser aiCvParser
     ) {
         this.candidateRepositoryPort = candidateRepositoryPort;
         this.attachmentRepositoryPort = attachmentRepositoryPort;
@@ -60,6 +67,7 @@ public class AttachmentService implements AttachmentUseCase {
         this.educationRepositoryPort = educationRepositoryPort;
         this.hardSkillRepositoryPort = hardSkillRepositoryPort;
         this.softSkillRepositoryPort = softSkillRepositoryPort;
+        this.aiCvParser = aiCvParser;
     }
 
     @Override
@@ -151,7 +159,13 @@ public class AttachmentService implements AttachmentUseCase {
         List<String> hardSkillNames = candidateCatalogValidationPort.getActiveHardSkillNames();
         List<String> softSkillNames = candidateCatalogValidationPort.getActiveSoftSkillNames();
 
-        CvParser.ParsedCv parsedCv = CvParser.parse(extractedText, hardSkillNames, softSkillNames);
+        CvParser.ParsedCv parsedCv = aiCvParser.parse(extractedText, hardSkillNames, softSkillNames);
+        if (parsedCv != null) {
+            log.info("AI CV parsing succeeded for attachment {}", attachmentId);
+        } else {
+            log.info("AI CV parsing unavailable or failed, falling back to regex parser for attachment {}", attachmentId);
+            parsedCv = CvParser.parse(extractedText, hardSkillNames, softSkillNames);
+        }
 
         CandidateParseResult parseResult = CandidateParseResult.builder()
                 .candidateId(candidateId)

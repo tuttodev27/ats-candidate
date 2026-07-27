@@ -1,5 +1,7 @@
 package com.ats.candidate.application.service;
 
+import com.ats.candidate.application.parser.AiCvParser;
+import com.ats.candidate.application.parser.CvParser;
 import com.ats.candidate.domain.exception.CandidateNotFoundException;
 import com.ats.candidate.domain.exception.InvalidAttachmentException;
 import com.ats.candidate.domain.exception.AttachmentParsingException;
@@ -15,8 +17,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +60,9 @@ class AttachmentServiceTest {
 
     @Mock
     private CandidateSoftSkillRepositoryPort softSkillRepositoryPort;
+
+    @Mock
+    private AiCvParser aiCvParser;
 
     @InjectMocks
     private AttachmentService attachmentService;
@@ -237,6 +244,111 @@ class AttachmentServiceTest {
                 .hasMessageContaining("El PDF no contiene texto legible");
 
         verify(attachmentRepositoryPort).save(argThat(a -> "FAILED".equals(a.getParseStatus())));
+    }
+
+    @Test
+    void parseUsesAiParserWhenAvailableAndPreFillsCandidate() throws Exception {
+        Long candidateId = 10L;
+        Long attachmentId = 99L;
+        byte[] content = createPdfWithText("any text");
+
+        Candidate candidate = Candidate.builder()
+                .id(candidateId)
+                .firstName(null)
+                .lastName(null)
+                .build();
+
+        Attachment attachment = Attachment.builder()
+                .id(attachmentId)
+                .candidateId(candidateId)
+                .fileUrl("candidates/10/cv.pdf")
+                .build();
+
+        CvParser.ParsedCv aiResult = new CvParser.ParsedCv();
+        aiResult.firstName = "Maria";
+        aiResult.lastName = "Garcia";
+        aiResult.email = "maria@ai.com";
+        aiResult.phone = "+56999999999";
+        aiResult.headline = "AI Parsed Headline";
+        aiResult.summary = "AI parsed summary";
+        aiResult.latestPosition = "CTO";
+        CvParser.ParsedEducation aiEdu = new CvParser.ParsedEducation();
+        aiEdu.level = "Universitario";
+        aiEdu.degree = "Ing. en Informatica";
+        aiEdu.institution = "Universidad AI";
+        aiEdu.startDate = LocalDate.of(2015, 3, 1);
+        aiEdu.endDate = LocalDate.of(2020, 12, 20);
+        aiResult.educations.add(aiEdu);
+        aiResult.matchedHardSkills.add("Python");
+        aiResult.matchedSoftSkills.add("Leadership");
+
+        when(candidateRepositoryPort.findById(candidateId)).thenReturn(Optional.of(candidate));
+        when(attachmentRepositoryPort.findById(attachmentId)).thenReturn(Optional.of(attachment));
+        when(attachmentStoragePort.load("candidates/10/cv.pdf")).thenReturn(content);
+        when(candidateCatalogValidationPort.getActiveHardSkillNames()).thenReturn(List.of("Python", "Java"));
+        when(candidateCatalogValidationPort.getActiveSoftSkillNames()).thenReturn(List.of("Leadership"));
+        when(educationLevelRepositoryPort.findActive()).thenReturn(List.of(
+                EducationLevel.builder().id(4L).name("Universitario").active(true).build()
+        ));
+        when(candidateCatalogValidationPort.findHardSkillIdByName("Python")).thenReturn(Optional.of(10L));
+        when(candidateCatalogValidationPort.findSoftSkillIdByName("Leadership")).thenReturn(Optional.of(20L));
+        when(attachmentRepositoryPort.save(any(Attachment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        when(aiCvParser.parse(any(), anyList(), anyList())).thenReturn(aiResult);
+
+        Attachment parsed = attachmentService.parse(candidateId, attachmentId);
+
+        assertThat(parsed.getParseStatus()).isEqualTo("COMPLETED");
+        assertThat(candidate.getFirstName()).isEqualTo("Maria");
+        assertThat(candidate.getLastName()).isEqualTo("Garcia");
+        assertThat(candidate.getEmail()).isEqualTo("maria@ai.com");
+        assertThat(candidate.getPhone()).isEqualTo("+56999999999");
+        assertThat(candidate.getProfessionalProfile()).isNotNull();
+        assertThat(candidate.getProfessionalProfile().getHeadline()).isEqualTo("AI Parsed Headline");
+        assertThat(candidate.getProfessionalProfile().getSummary()).isEqualTo("AI parsed summary");
+        assertThat(candidate.getProfessionalProfile().getLatestPosition()).isEqualTo("CTO");
+
+        verify(aiCvParser).parse(any(), anyList(), anyList());
+        verify(candidateParseResultRepositoryPort).save(any());
+        verify(candidateRepositoryPort).update(candidate);
+    }
+
+    @Test
+    void parseFallsBackToRegexWhenAiParserReturnsNull() throws Exception {
+        Long candidateId = 10L;
+        Long attachmentId = 99L;
+        String cvText = "Nombre: Juan\nApellido: Perez\nEmail: juan@test.com\nTelefono: 123456789\nHeadline: Tech Lead\nSummary: Software architect\nCargo: Senior Dev";
+        byte[] content = createPdfWithText(cvText);
+
+        Candidate candidate = Candidate.builder()
+                .id(candidateId)
+                .firstName("")
+                .lastName("")
+                .build();
+
+        Attachment attachment = Attachment.builder()
+                .id(attachmentId)
+                .candidateId(candidateId)
+                .fileUrl("candidates/10/cv.pdf")
+                .build();
+
+        when(candidateRepositoryPort.findById(candidateId)).thenReturn(Optional.of(candidate));
+        when(attachmentRepositoryPort.findById(attachmentId)).thenReturn(Optional.of(attachment));
+        when(attachmentStoragePort.load("candidates/10/cv.pdf")).thenReturn(content);
+        when(candidateCatalogValidationPort.getActiveHardSkillNames()).thenReturn(List.of("Java"));
+        when(candidateCatalogValidationPort.getActiveSoftSkillNames()).thenReturn(List.of());
+        when(attachmentRepositoryPort.save(any(Attachment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        when(aiCvParser.parse(any(), anyList(), anyList())).thenReturn(null);
+
+        Attachment parsed = attachmentService.parse(candidateId, attachmentId);
+
+        assertThat(parsed.getParseStatus()).isEqualTo("COMPLETED");
+        assertThat(candidate.getFirstName()).isEqualTo("Juan");
+        assertThat(candidate.getLastName()).isEqualTo("Perez");
+
+        verify(aiCvParser).parse(any(), anyList(), anyList());
+        verify(candidateRepositoryPort).update(candidate);
     }
 
     private AttachmentUpload validUpload() {
