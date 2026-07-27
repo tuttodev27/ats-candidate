@@ -1,6 +1,7 @@
 package com.ats.candidate.domain.port.in.usecase;
 
 import com.ats.candidate.domain.model.Candidate;
+import com.ats.candidate.domain.model.CandidateState;
 import com.ats.candidate.domain.model.CandidateStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,5 +16,6 @@ public interface CandidateUseCase {
     Candidate updateStatus(Long id, String status, Long recruiterId);
     void deactivate(Long id, Long recruiterId);
     List<CandidateStatus> getStatuses();
+    List<CandidateState> getStatusHistory(Long id);
 }
 

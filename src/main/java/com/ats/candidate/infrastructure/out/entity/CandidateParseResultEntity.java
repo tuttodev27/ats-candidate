@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,12 +29,10 @@ public class CandidateParseResultEntity {
     @Column(name = "attachment_id")
     Long attachmentId;
 
-    @Lob
-    @Column(name = "raw_text")
+    @Column(name = "raw_text", columnDefinition = "text")
     String rawText;
 
-    @Lob
-    @Column(name = "parsed_json")
+    @Column(name = "parsed_json", columnDefinition = "text")
     String parsedJson;
 
     @Column(name = "parser_version")
@@ -43,8 +40,7 @@ public class CandidateParseResultEntity {
 
     String status;
 
-    @Lob
-    @Column(name = "error_message")
+    @Column(name = "error_message", columnDefinition = "text")
     String errorMessage;
 
     @Column(name = "created_at")

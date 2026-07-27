@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,7 +26,7 @@ public class CandidateNoteEntity {
     @Column(name = "candidate_id", nullable = false)
     Long candidateId;
 
-    @Lob
+    @Column(columnDefinition = "text")
     String note;
 
     @Column(name = "created_at")

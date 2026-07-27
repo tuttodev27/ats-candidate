@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -53,7 +52,6 @@ public class AttachmentEntity {
     @Column(name = "parse_status")
     String parseStatus;
 
-    @Lob
-    @Column(name = "parse_error")
+    @Column(name = "parse_error", columnDefinition = "text")
     String parseError;
 }
