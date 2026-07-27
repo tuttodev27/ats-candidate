@@ -12,6 +12,7 @@
 - Si el servicio necesita a otro (ej. ats-candidate llama a ats-user), levanta ese otro repo por separado y confirma su puerto en su `application.yml`.
 - El proyecto usa Flyway para migraciones de base de datos.
 - Variables de entorno principales: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`.
+- Para el parseo de CVs con IA se usa **Ollama** local. Variables: `OLLAMA_BASE_URL` (default `http://localhost:11434`), `OLLAMA_MODEL` (default `llama3`), `OLLAMA_TIMEOUT`, `OLLAMA_MAX_TEXT`.
 
 ## Testing instructions
 - Corre `./gradlew test` para ejecutar todos los tests del servicio.
@@ -37,6 +38,7 @@
 - Los puertos de salida (interfaces) están en `domain.port.out`.
 - Los puertos de entrada se definen como interfaces en `domain` y se implementan en `application.service`.
 - Este servicio maneja PDFs con Apache PDFBox para adjuntos de candidatos.
+- El parseo de CVs usa Ollama (`infrastructure.out.ollama.OllamaClient`) con fallback a regex (`CvParser`).
 
 ## PR instructions
 - Formato de título: `[ats-candidate] <Title>`
