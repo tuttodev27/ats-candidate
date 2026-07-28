@@ -3,9 +3,12 @@ package com.ats.candidate.infrastructure.in.web.controller;
 import com.ats.candidate.domain.exception.CandidateNotFoundException;
 import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.model.Candidate;
+import com.ats.candidate.domain.model.CandidateState;
 import com.ats.candidate.domain.port.in.usecase.CandidateUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.CandidateResponse;
+import com.ats.candidate.infrastructure.in.web.dto.CandidateStateResponse;
 import com.ats.candidate.infrastructure.in.web.dto.CreateCandidateRequest;
+import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateRequest;
 import com.ats.candidate.infrastructure.in.web.dto.UpdateCandidateStatusRequest;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import org.junit.jupiter.api.Test;
@@ -243,6 +246,71 @@ class CandidateControllerTest {
         assertThatThrownBy(() -> controller.deactivate(1L, null))
                 .isInstanceOf(InvalidRecruiterException.class)
                 .hasMessageContaining("Authenticated recruiter is required");
+    }
+
+    @Test
+    void updateDelegatesToUseCaseAndReturns200() {
+        Long candidateId = 1L;
+        UpdateCandidateRequest request = new UpdateCandidateRequest(
+                "912345678", "CL", null, null, null, null, null, null, null, null, null, null, null, null
+        );
+        Candidate mapped = Candidate.builder().phone("912345678").countryCode("CL").build();
+        Candidate updated = Candidate.builder().id(candidateId).phone("912345678").countryCode("CL").build();
+        CandidateResponse response = candidateResponse(candidateId);
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "HS256")
+                .subject("42")
+                .build();
+
+        when(candidateWebMapper.toDomain(request)).thenReturn(mapped);
+        when(candidateUseCase.update(candidateId, mapped, 42L)).thenReturn(updated);
+        when(candidateWebMapper.toResponse(updated)).thenReturn(response);
+
+        var result = controller.update(candidateId, jwt, request);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isEqualTo(response);
+        verify(candidateUseCase).update(candidateId, mapped, 42L);
+    }
+
+    @Test
+    void updateRejectsMissingAuthenticatedRecruiter() {
+        UpdateCandidateRequest request = new UpdateCandidateRequest(
+                "912345678", null, null, null, null, null, null, null, null, null, null, null, null, null
+        );
+
+        assertThatThrownBy(() -> controller.update(1L, null, request))
+                .isInstanceOf(InvalidRecruiterException.class)
+                .hasMessageContaining("Authenticated recruiter is required");
+    }
+
+    @Test
+    void getStatusHistoryReturnsMappedStates() {
+        Long candidateId = 1L;
+        CandidateState state1 = CandidateState.builder()
+                .id(1L).candidateId(candidateId).state("NEW")
+                .createdBy(42L).createdAt(java.time.LocalDateTime.now().minusDays(1))
+                .build();
+        CandidateState state2 = CandidateState.builder()
+                .id(2L).candidateId(candidateId).state("IN_REVIEW")
+                .createdBy(42L).createdAt(java.time.LocalDateTime.now())
+                .build();
+
+        when(candidateUseCase.getStatusHistory(candidateId)).thenReturn(List.of(state1, state2));
+
+        var result = controller.getStatusHistory(candidateId);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).hasSize(2);
+        CandidateStateResponse first = result.getBody().get(0);
+        assertThat(first.id()).isEqualTo(1L);
+        assertThat(first.previousState()).isNull();
+        assertThat(first.newState()).isEqualTo("NEW");
+        CandidateStateResponse second = result.getBody().get(1);
+        assertThat(second.id()).isEqualTo(2L);
+        assertThat(second.previousState()).isEqualTo("NEW");
+        assertThat(second.newState()).isEqualTo("IN_REVIEW");
+        verify(candidateUseCase).getStatusHistory(candidateId);
     }
 }
 
