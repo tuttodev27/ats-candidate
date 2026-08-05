@@ -2,12 +2,14 @@ package com.ats.candidate.infrastructure.in.web.controller;
 
 import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.model.Attachment;
+import com.ats.candidate.domain.model.AttachmentContent;
 import com.ats.candidate.domain.model.AttachmentUpload;
 import com.ats.candidate.domain.port.in.usecase.AttachmentUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.AttachmentResponse;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -101,6 +103,22 @@ class AttachmentControllerTest {
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).containsExactly(response);
+    }
+
+    @Test
+    void getContentReturnsPdfBytesWithInlineDisposition() {
+        Long candidateId = 10L;
+        Long attachmentId = 99L;
+        byte[] content = "pdf-content".getBytes(StandardCharsets.UTF_8);
+        AttachmentContent attachmentContent = new AttachmentContent(content, "cv.pdf", "application/pdf");
+        when(attachmentUseCase.loadContent(candidateId, attachmentId)).thenReturn(attachmentContent);
+
+        var result = controller.getContent(candidateId, attachmentId);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isEqualTo(content);
+        assertThat(result.getHeaders().getContentType().toString()).contains("application/pdf");
+        assertThat(result.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION)).contains("inline");
     }
 
     @Test

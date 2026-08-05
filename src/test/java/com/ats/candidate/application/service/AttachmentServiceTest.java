@@ -4,6 +4,7 @@ import com.ats.candidate.application.parser.AiCvParser;
 import com.ats.candidate.application.parser.CvParser;
 import com.ats.candidate.domain.exception.CandidateNotFoundException;
 import com.ats.candidate.domain.exception.InvalidAttachmentException;
+import com.ats.candidate.domain.exception.AttachmentNotFoundException;
 import com.ats.candidate.domain.exception.AttachmentParsingException;
 import com.ats.candidate.domain.model.*;
 import com.ats.candidate.domain.port.out.repository.*;
@@ -349,6 +350,97 @@ class AttachmentServiceTest {
 
         verify(aiCvParser).parse(any(), anyList(), anyList());
         verify(candidateRepositoryPort).update(candidate);
+    }
+
+    @Test
+    void listByCandidateIdReturnsAttachments() {
+        Long candidateId = 10L;
+        Attachment attachment = Attachment.builder().id(1L).candidateId(candidateId).fileName("cv.pdf").build();
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(attachmentRepositoryPort.findByCandidateId(candidateId)).thenReturn(List.of(attachment));
+
+        List<Attachment> result = attachmentService.listByCandidateId(candidateId);
+
+        assertThat(result).containsExactly(attachment);
+    }
+
+    @Test
+    void listByCandidateIdReturnsEmptyListWhenNoAttachments() {
+        Long candidateId = 10L;
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(attachmentRepositoryPort.findByCandidateId(candidateId)).thenReturn(List.of());
+
+        List<Attachment> result = attachmentService.listByCandidateId(candidateId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void listByCandidateIdThrowsWhenCandidateDoesNotExist() {
+        Long candidateId = 10L;
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(false);
+
+        assertThatThrownBy(() -> attachmentService.listByCandidateId(candidateId))
+                .isInstanceOf(CandidateNotFoundException.class);
+    }
+
+    @Test
+    void loadContentReturnsFileBytesAndMetadata() {
+        Long candidateId = 10L;
+        Long attachmentId = 99L;
+        byte[] content = "pdf-content".getBytes(StandardCharsets.UTF_8);
+        Attachment attachment = Attachment.builder()
+                .id(attachmentId)
+                .candidateId(candidateId)
+                .fileName("cv.pdf")
+                .fileType("application/pdf")
+                .fileUrl("candidates/10/cv.pdf")
+                .build();
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(attachmentRepositoryPort.findById(attachmentId)).thenReturn(java.util.Optional.of(attachment));
+        when(attachmentStoragePort.load(attachment.getFileUrl())).thenReturn(content);
+
+        AttachmentContent result = attachmentService.loadContent(candidateId, attachmentId);
+
+        assertThat(result.content()).isEqualTo(content);
+        assertThat(result.fileName()).isEqualTo("cv.pdf");
+        assertThat(result.fileType()).isEqualTo("application/pdf");
+    }
+
+    @Test
+    void loadContentThrowsWhenCandidateDoesNotExist() {
+        Long candidateId = 10L;
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(false);
+
+        assertThatThrownBy(() -> attachmentService.loadContent(candidateId, 99L))
+                .isInstanceOf(CandidateNotFoundException.class);
+    }
+
+    @Test
+    void loadContentThrowsWhenAttachmentDoesNotExist() {
+        Long candidateId = 10L;
+        Long attachmentId = 99L;
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(attachmentRepositoryPort.findById(attachmentId)).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> attachmentService.loadContent(candidateId, attachmentId))
+                .isInstanceOf(AttachmentNotFoundException.class);
+    }
+
+    @Test
+    void loadContentThrowsWhenAttachmentBelongsToAnotherCandidate() {
+        Long candidateId = 10L;
+        Long attachmentId = 99L;
+        Attachment attachment = Attachment.builder()
+                .id(attachmentId)
+                .candidateId(11L)
+                .fileUrl("candidates/11/cv.pdf")
+                .build();
+        when(candidateRepositoryPort.existsById(candidateId)).thenReturn(true);
+        when(attachmentRepositoryPort.findById(attachmentId)).thenReturn(java.util.Optional.of(attachment));
+
+        assertThatThrownBy(() -> attachmentService.loadContent(candidateId, attachmentId))
+                .isInstanceOf(AttachmentNotFoundException.class);
     }
 
     private AttachmentUpload validUpload() {

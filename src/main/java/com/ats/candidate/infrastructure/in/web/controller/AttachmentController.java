@@ -9,7 +9,9 @@ import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -57,6 +59,29 @@ public class AttachmentController {
                 .stream()
                 .map(candidateWebMapper::toResponse)
                 .toList());
+    }
+
+    @GetMapping("/{attachmentId}/content")
+    @Operation(summary = "Descargar el contenido de un archivo adjunto")
+    public ResponseEntity<byte[]> getContent(
+            @PathVariable Long candidateId,
+            @PathVariable Long attachmentId
+    ) {
+        var content = attachmentUseCase.loadContent(candidateId, attachmentId);
+        String contentType = content.fileType() != null && !content.fileType().isBlank()
+                ? content.fileType()
+                : MediaType.APPLICATION_PDF_VALUE;
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDispositionInline(content.fileName()))
+                .body(content.content());
+    }
+
+    private String contentDispositionInline(String fileName) {
+        return ContentDisposition.builder("inline")
+                .filename(fileName != null ? fileName : "attachment.pdf")
+                .build()
+                .toString();
     }
 
     @PostMapping("/{attachmentId}/parse")

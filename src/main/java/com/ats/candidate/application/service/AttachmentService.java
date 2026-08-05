@@ -4,6 +4,7 @@ import com.ats.candidate.application.parser.AiCvParser;
 import com.ats.candidate.application.parser.CvParser;
 import com.ats.candidate.domain.exception.CandidateNotFoundException;
 import com.ats.candidate.domain.exception.InvalidAttachmentException;
+import com.ats.candidate.domain.exception.AttachmentNotFoundException;
 import com.ats.candidate.domain.exception.AttachmentParsingException;
 import com.ats.candidate.domain.model.*;
 import com.ats.candidate.domain.port.in.usecase.AttachmentUseCase;
@@ -110,6 +111,23 @@ public class AttachmentService implements AttachmentUseCase {
             throw new CandidateNotFoundException(candidateId);
         }
         return attachmentRepositoryPort.findByCandidateId(candidateId);
+    }
+
+    @Override
+    public AttachmentContent loadContent(Long candidateId, Long attachmentId) {
+        if (!candidateRepositoryPort.existsById(candidateId)) {
+            throw new CandidateNotFoundException(candidateId);
+        }
+        Attachment attachment = attachmentRepositoryPort.findById(attachmentId)
+                .orElseThrow(() -> new AttachmentNotFoundException(attachmentId));
+        if (!attachment.getCandidateId().equals(candidateId)) {
+            throw new AttachmentNotFoundException(attachmentId);
+        }
+        return new AttachmentContent(
+                attachmentStoragePort.load(attachment.getFileUrl()),
+                attachment.getFileName(),
+                attachment.getFileType()
+        );
     }
 
     @Override

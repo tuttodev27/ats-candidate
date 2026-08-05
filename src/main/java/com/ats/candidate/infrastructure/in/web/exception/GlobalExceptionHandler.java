@@ -8,6 +8,7 @@ import com.ats.candidate.domain.exception.InvalidAttachmentException;
 import com.ats.candidate.domain.exception.InvalidRecruiterException;
 import com.ats.candidate.domain.exception.InvalidCandidateStateException;
 import com.ats.candidate.domain.exception.AttachmentParsingException;
+import com.ats.candidate.domain.exception.AttachmentNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -154,6 +155,19 @@ public class GlobalExceptionHandler {
                         Instant.now(),
                         HttpStatus.BAD_REQUEST.value(),
                         "ATTACHMENT_PARSING_ERROR",
+                        ex.getMessage(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    @ExceptionHandler(AttachmentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAttachmentNotFound(AttachmentNotFoundException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpStatus.NOT_FOUND.value(),
+                        "ATTACHMENT_NOT_FOUND",
                         ex.getMessage(),
                         request.getRequestURI()
                 )
