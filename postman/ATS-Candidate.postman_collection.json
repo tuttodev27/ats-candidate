@@ -280,6 +280,45 @@
             },
             "description": "Sin Authorization header."
           }
+        },
+        {
+          "name": "Consultar catalogo de estados (GET /statuses)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Devuelve catalogo de estados con code y label\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(Array.isArray(body)).to.be.true;",
+                  "    pm.expect(body.length).to.be.greaterThan(0);",
+                  "    body.forEach(s => {",
+                  "        pm.expect(s).to.have.property(\"code\");",
+                  "        pm.expect(s).to.have.property(\"label\");",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/candidates/statuses",
+              "host": ["{{base_url}}"],
+              "path": ["api", "candidates", "statuses"]
+            },
+            "description": "Consulta el catalogo de estados de postulante. Requiere JWT de recruiter/admin."
+          }
         }
       ],
       "description": "Operaciones sobre postulantes."
