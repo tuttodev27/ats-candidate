@@ -40,6 +40,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/candidates/statuses")
+                        .hasAnyAuthority("RECRUITER_READ", "CANDIDATE_READ", "ROLE_ADMIN", "ROLE_RECRUITER")
                         .requestMatchers(HttpMethod.GET, "/api/candidates", "/api/candidates/*")
                         .hasAnyAuthority("RECRUITER_READ", "CANDIDATE_READ", "ROLE_ADMIN", "ROLE_RECRUITER")
                         .requestMatchers(HttpMethod.GET, "/api/candidates/*/attachments")

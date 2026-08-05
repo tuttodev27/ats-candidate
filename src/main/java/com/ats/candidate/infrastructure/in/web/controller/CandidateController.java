@@ -78,10 +78,10 @@ public class CandidateController {
         }
 
         @GetMapping("/statuses")
-        @Operation(summary = "Consultar catalogo de estados del postulante", description = "Devuelve los estados posibles de un postulante. Requiere JWT con permiso RECRUITER_READ.", responses = {
+        @Operation(summary = "Consultar catalogo de estados del postulante", description = "Devuelve los estados posibles de un postulante. Requiere JWT con rol RECRUITER o ROLE_ADMIN.", responses = {
                         @ApiResponse(responseCode = "200", description = "Catalogo de estados."),
                         @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
-                        @ApiResponse(responseCode = "403", description = "El usuario no tiene permiso RECRUITER_READ.")
+                        @ApiResponse(responseCode = "403", description = "El usuario no tiene autoridad de recruiter/admin.")
         })
         public ResponseEntity<List<CandidateStatusResponse>> getStatuses() {
                 List<CandidateStatusResponse> statuses = candidateUseCase.getStatuses()
