@@ -7,6 +7,7 @@ import com.ats.candidate.domain.port.in.usecase.AttachmentUseCase;
 import com.ats.candidate.infrastructure.in.web.dto.AttachmentResponse;
 import com.ats.candidate.infrastructure.in.web.mapper.CandidateWebMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
@@ -53,7 +54,12 @@ public class AttachmentController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar archivos adjuntos de un postulante")
+    @Operation(summary = "Listar archivos adjuntos de un postulante", description = "Devuelve los adjuntos de un postulante. Requiere JWT con permiso RECRUITER_READ.", responses = {
+            @ApiResponse(responseCode = "200", description = "Lista de adjuntos (vacia si el postulante no tiene archivos)."),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido."),
+            @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene permiso para consultar adjuntos."),
+            @ApiResponse(responseCode = "404", description = "El postulante no existe.")
+    })
     public ResponseEntity<List<AttachmentResponse>> listByCandidateId(@PathVariable Long candidateId) {
         return ResponseEntity.ok(attachmentUseCase.listByCandidateId(candidateId)
                 .stream()
