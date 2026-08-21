@@ -99,6 +99,45 @@ class CandidateCreateWebTest {
                 .andExpect(header().string("Location", endsWith("/api/candidates/1")));
     }
 
+    @Test
+    void returns400WhenEducationLevelIdDoesNotExist() throws Exception {
+        Candidate mapped = Candidate.builder().email("juan@example.com").build();
+        when(candidateWebMapper.toDomain(any(CreateCandidateRequest.class))).thenReturn(mapped);
+        when(candidateUseCase.create(mapped, 42L))
+                .thenThrow(new InvalidCatalogReferenceException("Invalid or inactive educationLevelId: 9999"));
+
+        mockMvc.perform(post("/api/candidates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createJsonWithEducationLevel(9999L))
+                        .with(jwt()
+                                .authorities(new SimpleGrantedAuthority("ROLE_RECRUITER"))
+                                .jwt(j -> j.subject("42"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_CATALOG_REFERENCE"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString("educationLevelId")))
+                .andExpect(jsonPath("$.path").value("/api/candidates"));
+    }
+
+    @Test
+    void returns201WhenCandidateHasEducations() throws Exception {
+        Candidate mapped = Candidate.builder().email("juan@example.com").build();
+        Candidate created = Candidate.builder().id(2L).email("juan@example.com").createdBy(42L).build();
+        CandidateResponse response = candidateResponse(2L);
+        when(candidateWebMapper.toDomain(any(CreateCandidateRequest.class))).thenReturn(mapped);
+        when(candidateUseCase.create(mapped, 42L)).thenReturn(created);
+        when(candidateWebMapper.toResponse(created)).thenReturn(response);
+
+        mockMvc.perform(post("/api/candidates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createJsonWithEducationLevel(1L))
+                        .with(jwt()
+                                .authorities(new SimpleGrantedAuthority("ROLE_RECRUITER"))
+                                .jwt(j -> j.subject("42"))))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", endsWith("/api/candidates/2")));
+    }
+
     private String createJsonWithExperienceRangeId(long experienceRangeId) {
         return """
                 {
@@ -114,6 +153,25 @@ class CandidateCreateWebTest {
                   }
                 }
                 """.formatted(experienceRangeId);
+    }
+
+    private String createJsonWithEducationLevel(long educationLevelId) {
+        return """
+                {
+                  "firstName": "Juan",
+                  "lastName": "Perez",
+                  "email": "juan@example.com",
+                  "educations": [
+                    {
+                      "educationLevelId": %d,
+                      "degree": "Ingeniería Civil Informática",
+                      "institution": "Universidad de Chile",
+                      "startDate": "2015-03-01",
+                      "endDate": "2020-12-31"
+                    }
+                  ]
+                }
+                """.formatted(educationLevelId);
     }
 
     private CandidateResponse candidateResponse(Long id) {
